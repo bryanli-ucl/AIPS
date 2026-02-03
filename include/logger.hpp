@@ -90,33 +90,19 @@ class PendingLog {
     public:
     PendingLog() : m_active(false), m_padding_length(0) {}
 
-    inline void start(int padding = 60) {
+    inline void start(int padding = 10) {
         m_active         = true;
         m_padding_length = padding;
     }
 
-    inline void done(const __FlashStringHelper* status = F("DONE")) {
+    inline void done(const __FlashStringHelper* status) {
         if (m_active) {
             for (int i = 0; i < m_padding_length; i++) {
-                Serial.print(' ');
+                Serial.print('\t');
             }
             Serial.println(status);
             m_active = false;
         }
-    }
-
-    inline void done(const char* status) {
-        if (m_active) {
-            for (int i = 0; i < m_padding_length; i++) {
-                Serial.print(' ');
-            }
-            Serial.println(status);
-            m_active = false;
-        }
-    }
-
-    inline void fail(const __FlashStringHelper* status = F("FAIL")) {
-        done(status);
     }
 
     inline bool is_active() const { return m_active; }
@@ -273,12 +259,11 @@ inline PendingLog& get_pending_log() {
 #endif
 
 #if LOG_LEVEL != LOG_LEVEL_OFF
-#define LOG_DONE() logger_detail::get_pending_log().done()
-#define LOG_FAIL() logger_detail::get_pending_log().fail()
+#define LOG_DONE() logger_detail::get_pending_log().done(F("[DONE]"))
+#define LOG_FAIL() logger_detail::get_pending_log().done(F("[FAIL]"))
+#define LOG_SKIP() logger_detail::get_pending_log().done(F("[SKIP]"))
 #else
 #define LOG_DONE()
-#define LOG_DONE_MSG(msg)
 #define LOG_FAIL()
-#define LOG_FAIL_MSG(msg)
-
+#define LOG_SKIP()
 #endif

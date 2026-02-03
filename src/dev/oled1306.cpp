@@ -16,12 +16,6 @@ bool dev_oled1306::begin() {
         return true;
     }
 
-    if (!Wire.available()) {
-        Wire.begin();
-        delay(100);
-    }
-
-
     m_initialized = m_display.begin(SSD1306_SWITCHCAPVCC, m_i2c_addr);
 
     if (m_initialized) {
