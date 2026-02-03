@@ -7,9 +7,8 @@ dev_oled1362::dev_oled1362(uint8_t cs, uint8_t dc, uint8_t rst)
 }
 
 bool dev_oled1362::begin() {
-    LOG_INFO("initializing {} ...", get_name());
+    if (!m_u8g2.begin()) return false;
 
-    m_u8g2.begin();
     m_u8g2.setBusClock(8000000); // 8MHz
     m_u8g2.setContrast(128);
 
@@ -19,30 +18,25 @@ bool dev_oled1362::begin() {
     m_initialized = true;
     m_is_enable   = true;
 
-    LOG_INFO("DONE");
-
     disp_status("OLED Ready", "SSD1362", "256x64");
     delay(1000);
 
     return true;
 }
 
-void dev_oled1362::update() {
-    if (!m_is_enable || !m_initialized) {
-        return;
-    }
 
-    // ...
+bool dev_oled1362::is_enable() {
+    return m_is_enable;
 }
 
-void dev_oled1362::enable(bool active) {
-    m_is_enable = active;
+void dev_oled1362::enable() {
+    m_is_enable = true;
+    m_u8g2.setPowerSave(0);
+}
 
-    if (!active) {
-        m_u8g2.setPowerSave(1);
-    } else if (m_initialized) {
-        m_u8g2.setPowerSave(0);
-    }
+void dev_oled1362::disable() {
+    m_is_enable = false;
+    m_u8g2.setPowerSave(1);
 }
 
 void dev_oled1362::clear() {

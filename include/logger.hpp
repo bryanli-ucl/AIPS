@@ -3,8 +3,6 @@
 
 #include <Arduino.h>
 
-#include "literals.hpp"
-
 #define LOG_LEVEL_TRACE 0
 #define LOG_LEVEL_DEBUG 1
 #define LOG_LEVEL_INFO 2
@@ -17,168 +15,270 @@
 #define LOG_LEVEL LOG_LEVEL_DEBUG
 #endif
 
-class Logger {
-    private:
-    bool m_show_level;
-    bool m_show_location;
-    Stream* m_output;
+#ifndef LOG_BAUDRATE
+#define LOG_BAUDRATE 9600
+#endif
 
-    Logger() : m_show_level(true),
-               m_show_location(true),
-               m_output(&Serial) {}
+#ifndef LOG_SHOW_LEVEL
+#define LOG_SHOW_LEVEL true
+#endif
 
-    Logger(const Logger&)            = delete;
-    Logger& operator=(const Logger&) = delete;
+#ifndef LOG_SHOW_LOCATION
+#define LOG_SHOW_LOCATION true
+#endif
 
-    void print_formatted_impl(const char* format) {
-        while (*format) {
-            m_output->print(*format++);
+namespace logger_detail {
+inline void print_formatted_impl(const char* format) {
+    while (*format) {
+        Serial.print(*format++);
+    }
+}
+
+template <typename T, typename... Args>
+inline void print_formatted_impl(const char* format, T&& value, Args&&... args) {
+    while (*format) {
+        if (*format == '{' && *(format + 1) == '}') {
+            Serial.print(value);
+            print_formatted_impl(format + 2, static_cast<Args&&>(args)...);
+            return;
         }
+        Serial.print(*format++);
     }
+}
 
-    template <typename T, typename... Args>
-    void print_formatted_impl(const char* format, T value, Args... args) {
-        while (*format) {
-            if (*format == '{' && *(format + 1) == '}') {
-                m_output->print(value);
-                print_formatted_impl(format + 2, args...);
-                return;
-            }
-            m_output->print(*format++);
+template <typename... Args>
+inline void print_formatted_flash(const __FlashStringHelper* format, Args&&... args) {
+    PGM_P p = reinterpret_cast<PGM_P>(format);
+    char buffer[256];
+    strncpy_P(buffer, p, sizeof(buffer) - 1);
+    buffer[sizeof(buffer) - 1] = '\0';
+    print_formatted_impl(buffer, static_cast<Args&&>(args)...);
+}
+
+template <bool ShowLevel, bool ShowLocation>
+struct HeaderPrinter {
+    static inline void print(const __FlashStringHelper* level,
+    const __FlashStringHelper* file,
+    int line) {
+        if constexpr (ShowLevel) {
+            Serial.print('[');
+            Serial.print(level);
+            Serial.print(F("] "));
         }
-    }
-
-    template <typename... Args>
-    void printFormattedFlash(const __FlashStringHelper* format, Args... args) {
-        PGM_P p = reinterpret_cast<PGM_P>(format);
-        char buffer[256];
-        strncpy_P(buffer, p, sizeof(buffer) - 1);
-        buffer[sizeof(buffer) - 1] = '\0';
-        print_formatted_impl(buffer, args...);
-    }
-
-    void print_header(const __FlashStringHelper* level, const __FlashStringHelper* file, int line) {
-        if (m_show_level) {
-            m_output->print('[');
-            m_output->print(level);
-            m_output->print(F("] "));
+        if constexpr (ShowLocation) {
+            Serial.print('[');
+            Serial.print(file);
+            Serial.print(':');
+            Serial.print(line);
+            Serial.print(F("] "));
         }
-        if (m_show_location) {
-            m_output->print('[');
-            m_output->print(file);
-            m_output->print(':');
-            m_output->print(line);
-            m_output->print(F("] "));
-        }
-    }
-
-    public:
-    static Logger& instance() {
-        static Logger logger;
-        return logger;
-    }
-
-    void begin(unsigned long baud_rate) { Serial.begin(baud_rate); }
-    void set_show_level(bool show) { m_show_level = show; }
-    void set_show_location(bool show) { m_show_location = show; }
-
-    // TRACE
-    template <typename... Args>
-    void trace(const __FlashStringHelper* file, int line, const __FlashStringHelper* format, Args... args) {
-        if (!m_output) return;
-        print_header(F("TRACE"), file, line);
-        printFormattedFlash(format, args...);
-        m_output->println();
-    }
-
-    // DEBUG
-    template <typename... Args>
-    void debug(const __FlashStringHelper* file, int line, const __FlashStringHelper* format, Args... args) {
-        if (!m_output) return;
-        print_header(F("DEBUG"), file, line);
-        printFormattedFlash(format, args...);
-        m_output->println();
-    }
-
-    // INFO
-    template <typename... Args>
-    void info(const __FlashStringHelper* file, int line, const __FlashStringHelper* format, Args... args) {
-        if (!m_output) return;
-        print_header(F("INFO "), file, line);
-        printFormattedFlash(format, args...);
-        m_output->println();
-    }
-
-    // WARN
-    template <typename... Args>
-    void warn(const __FlashStringHelper* file, int line, const __FlashStringHelper* format, Args... args) {
-        if (!m_output) return;
-        print_header(F("WARN "), file, line);
-        printFormattedFlash(format, args...);
-        m_output->println();
-    }
-
-    // ERROR
-    template <typename... Args>
-    void error(const __FlashStringHelper* file, int line, const __FlashStringHelper* format, Args... args) {
-        if (!m_output) return;
-        print_header(F("ERROR"), file, line);
-        printFormattedFlash(format, args...);
-        m_output->println();
-    }
-
-    // FATAL
-    template <typename... Args>
-    void fatal(const __FlashStringHelper* file, int line, const __FlashStringHelper* format, Args... args) {
-        if (!m_output) return;
-        print_header(F("FATAL"), file, line);
-        printFormattedFlash(format, args...);
-        m_output->println();
     }
 };
 
-inline Logger& log() {
-    return Logger::instance();
+inline void logger_begin() {
+    Serial.begin(LOG_BAUDRATE);
+    delay(100);
+    auto t = millis();
+    while (!Serial.available() && millis() - t < 1000) delay(10);
 }
 
+class PendingLog {
+    private:
+    bool m_active;
+    int m_padding_length;
+
+    public:
+    PendingLog() : m_active(false), m_padding_length(0) {}
+
+    inline void start(int padding = 60) {
+        m_active         = true;
+        m_padding_length = padding;
+    }
+
+    inline void done(const __FlashStringHelper* status = F("DONE")) {
+        if (m_active) {
+            for (int i = 0; i < m_padding_length; i++) {
+                Serial.print(' ');
+            }
+            Serial.println(status);
+            m_active = false;
+        }
+    }
+
+    inline void done(const char* status) {
+        if (m_active) {
+            for (int i = 0; i < m_padding_length; i++) {
+                Serial.print(' ');
+            }
+            Serial.println(status);
+            m_active = false;
+        }
+    }
+
+    inline void fail(const __FlashStringHelper* status = F("FAIL")) {
+        done(status);
+    }
+
+    inline bool is_active() const { return m_active; }
+};
+
+inline PendingLog& get_pending_log() {
+    static PendingLog pending;
+    return pending;
+}
+} // namespace logger_detail
+
 #if LOG_LEVEL != LOG_LEVEL_OFF
-#define LOG_BEGIN(val) log().begin(val);
-#define LOG_SETSHOWLEVEL(val) log().set_show_level(val)
-#define LOG_SETSHOWLOCATION(val) log().set_show_location(val)
+#define LOG_BEGIN() logger_detail::logger_begin()
+#else
+#define LOG_BEGIN()
 #endif
 
+// TRACE
 #if LOG_LEVEL <= LOG_LEVEL_TRACE
-#define LOG_TRACE(format, ...) log().trace(F(__FILE__), __LINE__, F(format), ##__VA_ARGS__)
+#define LOG_TRACE(format, ...)                                                  \
+    do {                                                                        \
+        logger_detail::HeaderPrinter<LOG_SHOW_LEVEL, LOG_SHOW_LOCATION>::print( \
+        F("TRACE"), F(__FILE__), __LINE__);                                     \
+        logger_detail::print_formatted_flash(F(format), ##__VA_ARGS__);         \
+        Serial.println();                                                       \
+    } while (0)
+
+#define LOG_TRACE_START(format, ...)                                            \
+    do {                                                                        \
+        logger_detail::HeaderPrinter<LOG_SHOW_LEVEL, LOG_SHOW_LOCATION>::print( \
+        F("TRACE"), F(__FILE__), __LINE__);                                     \
+        logger_detail::print_formatted_flash(F(format), ##__VA_ARGS__);         \
+        logger_detail::get_pending_log().start();                               \
+    } while (0)
 #else
 #define LOG_TRACE(format, ...)
+#define LOG_TRACE_START(format, ...)
+
 #endif
 
+// DEBUG
 #if LOG_LEVEL <= LOG_LEVEL_DEBUG
-#define LOG_DEBUG(format, ...) log().debug(F(__FILE__), __LINE__, F(format), ##__VA_ARGS__)
+#define LOG_DEBUG(format, ...)                                                  \
+    do {                                                                        \
+        logger_detail::HeaderPrinter<LOG_SHOW_LEVEL, LOG_SHOW_LOCATION>::print( \
+        F("DEBUG"), F(__FILE__), __LINE__);                                     \
+        logger_detail::print_formatted_flash(F(format), ##__VA_ARGS__);         \
+        Serial.println();                                                       \
+    } while (0)
+
+#define LOG_DEBUG_START(format, ...)                                            \
+    do {                                                                        \
+        logger_detail::HeaderPrinter<LOG_SHOW_LEVEL, LOG_SHOW_LOCATION>::print( \
+        F("DEBUG"), F(__FILE__), __LINE__);                                     \
+        logger_detail::print_formatted_flash(F(format), ##__VA_ARGS__);         \
+        logger_detail::get_pending_log().start();                               \
+    } while (0)
 #else
 #define LOG_DEBUG(format, ...)
+#define LOG_DEBUG_START(format, ...)
+
 #endif
 
+// INFO
 #if LOG_LEVEL <= LOG_LEVEL_INFO
-#define LOG_INFO(format, ...) log().info(F(__FILE__), __LINE__, F(format), ##__VA_ARGS__)
+#define LOG_INFO(format, ...)                                                   \
+    do {                                                                        \
+        logger_detail::HeaderPrinter<LOG_SHOW_LEVEL, LOG_SHOW_LOCATION>::print( \
+        F("INFO "), F(__FILE__), __LINE__);                                     \
+        logger_detail::print_formatted_flash(F(format), ##__VA_ARGS__);         \
+        Serial.println();                                                       \
+    } while (0)
+
+#define LOG_INFO_START(format, ...)                                             \
+    do {                                                                        \
+        logger_detail::HeaderPrinter<LOG_SHOW_LEVEL, LOG_SHOW_LOCATION>::print( \
+        F("INFO "), F(__FILE__), __LINE__);                                     \
+        logger_detail::print_formatted_flash(F(format), ##__VA_ARGS__);         \
+        logger_detail::get_pending_log().start();                               \
+    } while (0)
 #else
 #define LOG_INFO(format, ...)
+#define LOG_INFO_START(format, ...)
+
 #endif
 
+// WARN
 #if LOG_LEVEL <= LOG_LEVEL_WARN
-#define LOG_WARN(format, ...) log().warn(F(__FILE__), __LINE__, F(format), ##__VA_ARGS__)
+#define LOG_WARN(format, ...)                                                   \
+    do {                                                                        \
+        logger_detail::HeaderPrinter<LOG_SHOW_LEVEL, LOG_SHOW_LOCATION>::print( \
+        F("WARN "), F(__FILE__), __LINE__);                                     \
+        logger_detail::print_formatted_flash(F(format), ##__VA_ARGS__);         \
+        Serial.println();                                                       \
+    } while (0)
+
+#define LOG_WARN_START(format, ...)                                             \
+    do {                                                                        \
+        logger_detail::HeaderPrinter<LOG_SHOW_LEVEL, LOG_SHOW_LOCATION>::print( \
+        F("WARN "), F(__FILE__), __LINE__);                                     \
+        logger_detail::print_formatted_flash(F(format), ##__VA_ARGS__);         \
+        logger_detail::get_pending_log().start();                               \
+    } while (0)
 #else
 #define LOG_WARN(format, ...)
+#define LOG_WARN_START(format, ...)
+
 #endif
 
+// ERROR
 #if LOG_LEVEL <= LOG_LEVEL_ERROR
-#define LOG_ERROR(format, ...) log().error(F(__FILE__), __LINE__, F(format), ##__VA_ARGS__)
+#define LOG_ERROR(format, ...)                                                  \
+    do {                                                                        \
+        logger_detail::HeaderPrinter<LOG_SHOW_LEVEL, LOG_SHOW_LOCATION>::print( \
+        F("ERROR"), F(__FILE__), __LINE__);                                     \
+        logger_detail::print_formatted_flash(F(format), ##__VA_ARGS__);         \
+        Serial.println();                                                       \
+    } while (0)
+
+#define LOG_ERROR_START(format, ...)                                            \
+    do {                                                                        \
+        logger_detail::HeaderPrinter<LOG_SHOW_LEVEL, LOG_SHOW_LOCATION>::print( \
+        F("ERROR"), F(__FILE__), __LINE__);                                     \
+        logger_detail::print_formatted_flash(F(format), ##__VA_ARGS__);         \
+        logger_detail::get_pending_log().start();                               \
+    } while (0)
 #else
 #define LOG_ERROR(format, ...)
+#define LOG_ERROR_START(format, ...)
+
 #endif
 
+// FATAL
 #if LOG_LEVEL <= LOG_LEVEL_FATAL
-#define LOG_FATAL(format, ...) log().fatal(F(__FILE__), __LINE__, F(format), ##__VA_ARGS__)
+#define LOG_FATAL(format, ...)                                                  \
+    do {                                                                        \
+        logger_detail::HeaderPrinter<LOG_SHOW_LEVEL, LOG_SHOW_LOCATION>::print( \
+        F("FATAL"), F(__FILE__), __LINE__);                                     \
+        logger_detail::print_formatted_flash(F(format), ##__VA_ARGS__);         \
+        Serial.println();                                                       \
+    } while (0)
+
+#define LOG_FATAL_START(format, ...)                                            \
+    do {                                                                        \
+        logger_detail::HeaderPrinter<LOG_SHOW_LEVEL, LOG_SHOW_LOCATION>::print( \
+        F("FATAL"), F(__FILE__), __LINE__);                                     \
+        logger_detail::print_formatted_flash(F(format), ##__VA_ARGS__);         \
+        logger_detail::get_pending_log().start();                               \
+    } while (0)
 #else
 #define LOG_FATAL(format, ...)
+#define LOG_FATAL_START(format, ...)
+
+#endif
+
+#if LOG_LEVEL != LOG_LEVEL_OFF
+#define LOG_DONE() logger_detail::get_pending_log().done()
+#define LOG_FAIL() logger_detail::get_pending_log().fail()
+#else
+#define LOG_DONE()
+#define LOG_DONE_MSG(msg)
+#define LOG_FAIL()
+#define LOG_FAIL_MSG(msg)
+
 #endif
