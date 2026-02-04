@@ -10,6 +10,9 @@ using namespace ::literals;
 volatile int64_t motorL_cnt = 0;
 volatile int64_t motorR_cnt = 0;
 
+rot_t rad_l = 0Hz;
+rot_t rad_r = 0Hz;
+
 void motorL_isr() {
     if (digitalRead(ENCODERL_A) == digitalRead(ENCODERL_B))
         motorL_cnt++;
@@ -41,13 +44,47 @@ auto setup() -> void {
 
 auto task_100ms() -> void {
     LOG_TRACE("100 ms task");
+
+    static time_t prev_time  = 0;
+    static dura_t delta_time = 0s;
+    delta_time               = dura_t((micros() - prev_time) / 1000'000.0);
+    prev_time                = micros();
+
+    { // speed stats
+
+        constexpr float GEAR_RATIO = (22.0 / 12.0) * (22.0 / 10.0) * (24.0 / 10.0);
+        constexpr float RAW_CPR    = 48.0;
+        constexpr float CPR_REV    = 1 / (GEAR_RATIO * RAW_CPR);
+
+        int64_t encl = motorL_cnt;
+        int64_t encr = motorR_cnt;
+
+        static int64_t prev_encl = encl;
+        static int64_t prev_encr = encr;
+
+        float deltal = encl - prev_encl;
+        float deltar = encr - prev_encr;
+
+        rad_l = deltal * CPR_REV * TWO_PI / delta_time;
+        rad_r = deltar * CPR_REV * TWO_PI / delta_time;
+
+        LOG_TRACE("{} * {}, delta time: {}s", deltal / CPR, (2.0 * PI / delta_time).v, delta_time.v);
+
+        prev_encl = encl;
+        prev_encr = encr;
+    }
 }
+
 auto task_500ms() -> void {
     LOG_TRACE("500 ms task");
 }
+
 auto task_1s() -> void {
     LOG_TRACE("1s task");
+
+    LOG_INFO("Motor L angular velocity: {}rad/s, cnt: {}", rad_l.v, motorL_cnt);
 }
+
 auto task_5s() -> void {
     LOG_TRACE("5s task");
 }

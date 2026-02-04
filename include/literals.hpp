@@ -27,13 +27,15 @@ using mass_t = Quantity<1, 0, 0>; // kilogram
 using leng_t = Quantity<0, 1, 0>; // metre
 using dura_t = Quantity<0, 0, 1>; // second
 
-using val_t = Quantity<0, 1, -1>; // m/s
+using vel_t = Quantity<0, 1, -1>; // m/s
 using acc_t = Quantity<0, 1, -2>; // m/s^2
 using jrk_t = Quantity<0, 1, -3>; // m/s^3
 
 using frc_t = Quantity<1, 1, -2>; // kg*m/s^2 (Newton)
 using eng_t = Quantity<1, 2, -2>; // kg*m^2/s^2 (Joule)
 using pwr_t = Quantity<1, 2, -3>; // kg*m^2/s^3 (Watt)
+
+using rot_t = Quantity<0, 0, -1>; // rad/s
 
 using frq_t = Quantity<0, 0, -1>; // 1/s (Hz)
 
@@ -72,8 +74,8 @@ constexpr auto operator*(double lhs, Quantity<M, L, T> rhs) -> Quantity<M, L, T>
     return Quantity<M, L, T>(lhs * rhs.v);
 }
 template <int M, int L, int T>
-constexpr auto operator/(double lhs, Quantity<M, L, T> rhs) -> Quantity<M, L, T> {
-    return Quantity<M, L, T>(lhs / rhs.v);
+constexpr auto operator/(double lhs, Quantity<M, L, T> rhs) -> Quantity<-M, -L, -T> {
+    return Quantity<-M, -L, -T>(lhs / rhs.v);
 }
 
 // compare
@@ -124,6 +126,10 @@ constexpr auto operator"" km(unsigned long long value) -> leng_t { return leng_t
 constexpr auto operator"" m(unsigned long long value) -> leng_t { return leng_t(static_cast<double>(value)); }
 constexpr auto operator"" mm(unsigned long long value) -> leng_t { return leng_t(static_cast<double>(value)) / 1000; }
 
+/// speed
+constexpr auto operator"" m_s(long double value) -> vel_t { return vel_t(static_cast<double>(value)); }
+constexpr auto operator"" m_s(unsigned long long value) -> vel_t { return vel_t(static_cast<double>(value)); }
+
 /// Newton
 constexpr auto operator"" kN(long double value) -> frc_t { return frc_t(static_cast<double>(value)) * 1000; }
 constexpr auto operator"" N(long double value) -> frc_t { return frc_t(static_cast<double>(value)); }
@@ -153,5 +159,8 @@ constexpr auto operator"" mW(unsigned long long value) -> pwr_t { return pwr_t(s
 constexpr auto operator"" Hz(long double value) -> frq_t { return frq_t(static_cast<double>(value)); }
 constexpr auto operator"" Hz(unsigned long long value) -> frq_t { return frq_t(static_cast<double>(value)); }
 
+/// rot_t
+constexpr auto operator"" rad_s(long double value) -> rot_t { return rot_t(static_cast<double>(value)); }
+constexpr auto operator"" rad_s(unsigned long long value) -> rot_t { return rot_t(static_cast<double>(value)); }
 
 } // namespace literals
