@@ -1,7 +1,7 @@
 #include <Arduino.h>
 
-#include "firmware.hpp"
 #include "literals.hpp"
+#include "peripherals.hpp"
 
 #include <exception>
 

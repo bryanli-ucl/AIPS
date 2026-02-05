@@ -44,7 +44,7 @@ auto firmware_begin() -> void {
 
 
     { // logger (Serial)
-        LOG_BEGIN();
+        LOG_INIT();
         delay(300); // essential
     }
 
@@ -63,7 +63,7 @@ auto firmware_begin() -> void {
                 Wire.beginTransmission(addr);
                 byte error = Wire.endTransmission();
                 if (error == 0) {
-                    LOG_INFO("Found I2C device at 0x{}", addr);
+                    LOG_INFO("Found I2C device at 0x{h}", addr);
                 }
             }
         } else
