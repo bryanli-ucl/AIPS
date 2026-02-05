@@ -5,16 +5,20 @@
 dura_t Motor::m_delta_time = 0us;
 time_t Motor::m_prev_time  = 0;
 
-Motor::Motor(uint8_t en_a, uint8_t en_b)
-: m_pin_en_a(en_a), m_pin_en_b(en_b),
+Motor::Motor(uint8_t enc_a, uint8_t enc_b, uint8_t dir, uint8_t en)
+: m_pin_enc_a(enc_a), m_pin_enc_b(enc_b),
+  m_pin_en(en), m_pin_dir(dir),
   m_count(0), m_prev_count(0),
   m_ang_vel(0rad_s) {}
 
 bool Motor::begin() {
-    pinMode(m_pin_en_a, INPUT_PULLDOWN);
-    pinMode(m_pin_en_b, INPUT_PULLDOWN);
+    pinMode(m_pin_enc_a, INPUT_PULLDOWN);
+    pinMode(m_pin_enc_b, INPUT_PULLDOWN);
 
-    attachInterruptParam(digitalPinToInterrupt(m_pin_en_a), Motor::isr, CHANGE, this);
+    pinMode(m_pin_en, OUTPUT);
+    pinMode(m_pin_dir, OUTPUT);
+
+    attachInterruptParam(digitalPinToInterrupt(m_pin_enc_a), Motor::isr, CHANGE, this);
 
     return true;
 }
@@ -37,7 +41,7 @@ void Motor::update_time() {
 
 void Motor::isr(void* raw_ins) {
     Motor* ins = reinterpret_cast<Motor*>(raw_ins);
-    if (digitalRead(ins->m_pin_en_a) == digitalRead(ins->m_pin_en_b)) {
+    if (digitalRead(ins->m_pin_enc_a) == digitalRead(ins->m_pin_enc_b)) {
         ins->m_count++;
     } else {
         ins->m_count--;
