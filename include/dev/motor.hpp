@@ -9,7 +9,7 @@ using namespace ::literals;
 class Motor {
 
     public:
-    Motor(uint8_t en_a, uint8_t en_b, uint8_t dir, uint8_t en);
+    Motor(uint8_t en_a, uint8_t en_b);
 
     bool begin();
 
@@ -23,10 +23,8 @@ class Motor {
     static void isr(void*);
 
     private:
-    uint8_t m_pin_enc_a;
-    uint8_t m_pin_enc_b;
-    uint8_t m_pin_en;
-    uint8_t m_pin_dir;
+    uint8_t m_pin_en_a;
+    uint8_t m_pin_en_b;
 
     int32_t m_count;      // -2^31 -- 2^31-1
     int32_t m_prev_count; // -2^31 -- 2^31-1

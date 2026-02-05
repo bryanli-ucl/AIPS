@@ -67,7 +67,7 @@ inline void print_quantity(Quantity<M, L, T> val) {
     }
 
 
-    // kg^M m^L s^T
+    // kg^M * m^L * s^T
     if constexpr (M > 0) {
         if constexpr (M == 1) Serial.print(kg1);
         if constexpr (M == 2) Serial.print(kg2);
@@ -84,7 +84,7 @@ inline void print_quantity(Quantity<M, L, T> val) {
         if constexpr (T >= 3) Serial.print(F("s")), Serial.print(T);
     }
 
-    // 1/kg^-M m^-L s^-T
+    // kg^-M * m^-L * s^-T
     if constexpr (M < 0 || L < 0 || T < 0)
         Serial.print('/');
     if constexpr (M < 0) {

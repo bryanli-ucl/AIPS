@@ -10,30 +10,14 @@
 
 namespace peripherals {
 
-constexpr uint8_t ENCODERL_A = A0;
-constexpr uint8_t ENCODERL_B = A1;
-constexpr uint8_t ENCODERR_A = A2;
-constexpr uint8_t ENCODERR_B = A3;
+constexpr uint8_t ENCODERL_A = D2;
+constexpr uint8_t ENCODERL_B = D4;
+constexpr uint8_t ENCODERR_A = D7;
+constexpr uint8_t ENCODERR_B = D8;
 
-constexpr uint8_t IIC_SDA = A4;
-constexpr uint8_t IIC_SLC = A5;
-
-constexpr uint8_t SERIAL_Rx = D0;
-constexpr uint8_t SERIAL_Tx = D1;
-
-constexpr uint8_t MOTOR_L_DIR = D2;
-constexpr uint8_t MOTOR_L_EN  = D3;
-constexpr uint8_t MOTOR_R_DIR = D4;
-constexpr uint8_t MOTOR_R_EN  = D5;
-
-constexpr uint8_t SERVO = D6;
-
-constexpr uint8_t OLED_DC  = D8;
-constexpr uint8_t OLED_RST = D9;
 constexpr uint8_t OLED_CS  = D10;
-constexpr uint8_t SPI_MOSI = D11;
-constexpr uint8_t SPI_MISO = D12;
-constexpr uint8_t SPI_CLK  = D13;
+constexpr uint8_t OLED_RST = D9;
+constexpr uint8_t OLED_DC  = D12;
 
 extern dev_oled1362 oled1362; // SPI
 extern dev_oled1306 oled1306; // IIC

@@ -12,9 +12,8 @@ ModulinoMovement imu{};    // IIC
 ModulinoKnob knob{};       // IIC
 ModulinoPixels pixels{};   // IIC
 
-
-Motor motor_l{ ENCODERL_A, ENCODERL_B, MOTOR_L_DIR, MOTOR_L_EN }; // interrupt
-Motor motor_r{ ENCODERR_A, ENCODERR_B, MOTOR_R_DIR, MOTOR_R_EN }; // interrupt
+Motor motor_l{ ENCODERL_A, ENCODERL_B }; // interrupt
+Motor motor_r{ ENCODERR_A, ENCODERR_B }; // interrupt
 
 auto begin() -> void {
 
