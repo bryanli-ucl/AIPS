@@ -6,7 +6,8 @@
 #include "dev/motor.hpp"
 #include "dev/oled1306.hpp"
 #include "dev/oled1362.hpp"
-#include "dev/serial_logger.hpp"
+
+#include "serial_logger.hpp"
 
 namespace peripherals {
 
