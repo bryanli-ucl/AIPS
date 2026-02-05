@@ -1,5 +1,6 @@
 #include <Arduino.h>
-#include <logger.hpp>
+
+#include "dev/serial_logger.hpp"
 
 #include <unity.h>
 

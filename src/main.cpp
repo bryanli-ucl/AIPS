@@ -1,77 +1,24 @@
 #include <Arduino.h>
 
-#include "literals.hpp"
-#include "peripherals.hpp"
+#include "dev/peripherals.hpp"
 
+#include "literals.hpp"
 #include <exception>
 
 using namespace ::literals;
-
-volatile int64_t motorL_cnt = 0;
-volatile int64_t motorR_cnt = 0;
-
-rot_t rad_l = 0Hz;
-rot_t rad_r = 0Hz;
-
-void motorL_isr() {
-    if (digitalRead(ENCODERL_A) == digitalRead(ENCODERL_B))
-        motorL_cnt++;
-    else
-        motorL_cnt--;
-}
-
-void motorR_isr() {
-    if (digitalRead(ENCODERR_A) == digitalRead(ENCODERR_B))
-        motorR_cnt++;
-    else
-        motorR_cnt--;
-}
+using namespace ::peripherals;
 
 auto setup() -> void {
-
-    firmware_begin();
-
-    pinMode(ENCODERL_A, INPUT_PULLUP);
-    pinMode(ENCODERL_B, INPUT_PULLUP);
-    pinMode(ENCODERR_A, INPUT_PULLUP);
-    pinMode(ENCODERR_B, INPUT_PULLUP);
-
-    noInterrupts();
-    attachInterrupt(digitalPinToInterrupt(ENCODERL_A), motorL_isr, CHANGE);
-    attachInterrupt(digitalPinToInterrupt(ENCODERR_A), motorR_isr, CHANGE);
-    interrupts();
+    peripherals::begin();
 }
 
 auto task_100ms() -> void {
     LOG_TRACE("100 ms task");
 
-    static time_t prev_time  = 0;
-    static dura_t delta_time = 0s;
-    delta_time               = dura_t((micros() - prev_time) / 1000'000.0);
-    prev_time                = micros();
-
     { // speed stats
-
-        constexpr float GEAR_RATIO = (22.0 / 12.0) * (22.0 / 10.0) * (24.0 / 10.0);
-        constexpr float RAW_CPR    = 48.0;
-        constexpr float CPR_REV    = 1 / (GEAR_RATIO * RAW_CPR);
-
-        int64_t encl = motorL_cnt;
-        int64_t encr = motorR_cnt;
-
-        static int64_t prev_encl = encl;
-        static int64_t prev_encr = encr;
-
-        float deltal = encl - prev_encl;
-        float deltar = encr - prev_encr;
-
-        rad_l = deltal * CPR_REV * TWO_PI / delta_time;
-        rad_r = deltar * CPR_REV * TWO_PI / delta_time;
-
-        LOG_TRACE("{} * {}, delta time: {}s", deltal / CPR, (2.0 * PI / delta_time).v, delta_time.v);
-
-        prev_encl = encl;
-        prev_encr = encr;
+        Motor::update_time();
+        motor_l.calc_velocity();
+        motor_r.calc_velocity();
     }
 }
 
@@ -82,21 +29,20 @@ auto task_500ms() -> void {
 auto task_1s() -> void {
     LOG_TRACE("1s task");
 
-    LOG_INFO("Motor L angular velocity: {}rad/s, cnt: {}", rad_l.v, motorL_cnt);
+    LOG_INFO("Motor ang_vel(rad/s): ({}, {})", motor_l.get_avel(), motor_r.get_avel());
 }
 
 auto task_5s() -> void {
     LOG_TRACE("5s task");
 }
 
-
 auto loop() -> void {
 
     { // time stats
-        static time_t last_100ms_timer = -114514;
-        static time_t last_500ms_timer = -114514;
-        static time_t last_1s_timer    = -114514;
-        static time_t last_5s_timer    = -114514;
+        static time_t last_100ms_timer = -1;
+        static time_t last_500ms_timer = -1;
+        static time_t last_1s_timer    = -1;
+        static time_t last_5s_timer    = -1;
         static time_t current_time;
 
         current_time = millis();
@@ -118,6 +64,8 @@ auto loop() -> void {
             task_5s();
         }
     }
+
+    // LOG_INFO("{}", digitalRead(ENCODERL_A));
 
     // Serial.print(digitalRead(D2));
 

@@ -1,21 +1,7 @@
-#pragma once
+// peripherals.cpp
+#include "dev/peripherals.hpp"
 
-#include <Arduino.h>
-#include <Modulino.h>
-
-#include "dev/oled1306.hpp"
-#include "dev/oled1362.hpp"
-#include "logger.hpp"
-
-
-constexpr uint8_t ENCODERL_A = D2;
-constexpr uint8_t ENCODERL_B = D3;
-constexpr uint8_t ENCODERR_A = D7;
-constexpr uint8_t ENCODERR_B = D8;
-
-constexpr uint8_t OLED_CS  = D10;
-constexpr uint8_t OLED_RST = D9;
-constexpr uint8_t OLED_DC  = D4;
+namespace peripherals {
 
 dev_oled1362 oled1362{ OLED_CS, OLED_DC, OLED_RST }; // SPI
 dev_oled1306 oled1306{};                             // IIC
@@ -26,25 +12,13 @@ ModulinoMovement imu{};    // IIC
 ModulinoKnob knob{};       // IIC
 ModulinoPixels pixels{};   // IIC
 
-struct {
+Motor motor_l{ ENCODERL_A, ENCODERL_B }; // interrupt
+Motor motor_r{ ENCODERR_A, ENCODERR_B }; // interrupt
 
-    bool IIC      = false;
-    bool Modulino = false;
-    bool OLED1362 = false;
-    bool OLED1306 = false;
-    bool buttons  = false;
-    bool pixels   = false;
-    bool knob     = false;
-    bool imu      = false;
-    bool buzzer   = false;
-
-} enable_list __packed;
-
-auto firmware_begin() -> void {
-
+auto begin() -> void {
 
     { // logger (Serial)
-        LOG_INIT();
+        LOG_BEGIN();
         delay(300); // essential
     }
 
@@ -111,7 +85,7 @@ auto firmware_begin() -> void {
 
     { // buttons
         LOG_INFO_START("Initializing ModulinoButtons");
-        if (enable_list.buttons) {
+        if (enable_list.Buttons) {
             if (!buttons.begin())
                 LOG_FAIL();
             else
@@ -122,7 +96,7 @@ auto firmware_begin() -> void {
 
     { // imu
         LOG_INFO_START("Initializing ModulinoIMU");
-        if (enable_list.imu) {
+        if (enable_list.IMU) {
             if (!imu.begin())
                 LOG_FAIL();
             else
@@ -133,7 +107,7 @@ auto firmware_begin() -> void {
 
     { // knob
         LOG_INFO_START("Initializing ModulinoKnob");
-        if (enable_list.knob) {
+        if (enable_list.Knob) {
             if (!knob.begin())
                 LOG_FAIL();
             else
@@ -145,7 +119,7 @@ auto firmware_begin() -> void {
 
     { // pixels
         LOG_INFO_START("Initializing ModulinoPixels");
-        if (enable_list.pixels) {
+        if (enable_list.Pixels) {
             if (!pixels.begin())
                 LOG_FAIL();
             else
@@ -156,7 +130,7 @@ auto firmware_begin() -> void {
 
     { // buzzer
         LOG_INFO_START("Initializing ModulinoBuzzer");
-        if (enable_list.buzzer) {
+        if (enable_list.Buzzer) {
             if (!buzzer.begin())
                 LOG_FAIL();
             else
@@ -164,4 +138,20 @@ auto firmware_begin() -> void {
         } else
             LOG_SKIP();
     }
+
+    { // motor
+        LOG_INFO_START("Initializing Motor (L & R) and Encoder");
+        if (enable_list.Motor) {
+            if (!motor_l.begin() && motor_r.begin())
+                LOG_FAIL();
+            else
+                LOG_DONE();
+        } else
+            LOG_SKIP();
+    }
+
+    // finished
+    LOG_INFO("Peripherals initialization finished.");
 }
+
+} // namespace peripherals

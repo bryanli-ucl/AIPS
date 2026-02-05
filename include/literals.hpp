@@ -21,6 +21,14 @@ struct Quantity {
     explicit constexpr Quantity(double v) : v(v) {}
 };
 
+template <typename T>
+struct is_quantity : std::false_type {};
+template <int M, int L, int T>
+struct is_quantity<Quantity<M, L, T>> : std::true_type {};
+template <typename T>
+inline constexpr bool is_quantity_v = is_quantity<std::decay_t<T>>::value;
+
+
 using dim_less = Quantity<0, 0, 0>;
 
 using mass_t = Quantity<1, 0, 0>; // kilogram
@@ -35,7 +43,7 @@ using frc_t = Quantity<1, 1, -2>; // kg*m/s^2 (Newton)
 using eng_t = Quantity<1, 2, -2>; // kg*m^2/s^2 (Joule)
 using pwr_t = Quantity<1, 2, -3>; // kg*m^2/s^3 (Watt)
 
-using rot_t = Quantity<0, 0, -1>; // rad/s
+using avel_t = Quantity<0, 0, -1>; // rad/s
 
 using frq_t = Quantity<0, 0, -1>; // 1/s (Hz)
 
@@ -160,7 +168,7 @@ constexpr auto operator"" Hz(long double value) -> frq_t { return frq_t(static_c
 constexpr auto operator"" Hz(unsigned long long value) -> frq_t { return frq_t(static_cast<double>(value)); }
 
 /// rot_t
-constexpr auto operator"" rad_s(long double value) -> rot_t { return rot_t(static_cast<double>(value)); }
-constexpr auto operator"" rad_s(unsigned long long value) -> rot_t { return rot_t(static_cast<double>(value)); }
+constexpr auto operator"" rad_s(long double value) -> avel_t { return avel_t(static_cast<double>(value)); }
+constexpr auto operator"" rad_s(unsigned long long value) -> avel_t { return avel_t(static_cast<double>(value)); }
 
 } // namespace literals

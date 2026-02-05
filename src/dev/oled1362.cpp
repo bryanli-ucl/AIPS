@@ -1,6 +1,6 @@
 #include "dev/oled1362.hpp"
 
-#include "logger.hpp"
+#include "dev/serial_logger.hpp"
 
 dev_oled1362::dev_oled1362(uint8_t cs, uint8_t dc, uint8_t rst)
 : m_u8g2(U8G2_R0, cs, dc, rst), m_is_enable(false), m_cs_pin(cs), m_dc_pin(dc), m_rst_pin(rst), m_initialized(false) {
