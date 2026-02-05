@@ -10,6 +10,10 @@ using namespace ::peripherals;
 
 auto setup() -> void {
     peripherals::begin();
+
+    LOG_INFO("dis: {}, vel: {}, acc: {}", 1m, 1m_s, 1m_s / 1s);
+    LOG_INFO("mass: {}, momtumum: {}, force: {}", 1kg, 1kg * 1m_s, 1N);
+    LOG_INFO("eng: {}, frequency: {}", 1.6kJ, 80Hz);
 }
 
 auto task_100ms() -> void {

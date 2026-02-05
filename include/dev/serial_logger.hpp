@@ -45,6 +45,63 @@ constexpr void print(f_ptr fmt, Args... args) {
 template <int M, int L, int T>
 inline void print_quantity(Quantity<M, L, T> val) {
     Serial.print(val.v);
+
+    static const f_ptr kg1 = F("kg");
+    static const f_ptr kg2 = F("kg²");
+    static const f_ptr m1  = F("m");
+    static const f_ptr m2  = F("m²");
+    static const f_ptr s1  = F("s");
+    static const f_ptr s2  = F("s²");
+
+    if constexpr (M == 1 && L == 1 && T == -2) {
+        Serial.print('N');
+        return;
+    }
+    if constexpr (M == 1 && L == 2 && T == -2) {
+        Serial.print('J');
+        return;
+    }
+    if constexpr (M == 1 && L == 2 && T == -3) {
+        Serial.print('W');
+        return;
+    }
+
+
+    // kg^M * m^L * s^T
+    if constexpr (M > 0) {
+        if constexpr (M == 1) Serial.print(kg1);
+        if constexpr (M == 2) Serial.print(kg2);
+        if constexpr (M >= 3) Serial.print(F("kg")), Serial.print(M);
+    }
+    if constexpr (L > 0) {
+        if constexpr (L == 1) Serial.print(m1);
+        if constexpr (L == 2) Serial.print(m2);
+        if constexpr (L >= 3) Serial.print(F("m")), Serial.print(L);
+    }
+    if constexpr (T > 0) {
+        if constexpr (T == 1) Serial.print(s1);
+        if constexpr (T == 2) Serial.print(s2);
+        if constexpr (T >= 3) Serial.print(F("s")), Serial.print(T);
+    }
+
+    // kg^-M * m^-L * s^-T
+    if constexpr (M < 0 || L < 0 || T < 0)
+        Serial.print('/');
+    if constexpr (M < 0) {
+        if constexpr (M == -1) Serial.print(kg1);
+        if constexpr (M == -2) Serial.print(kg2);
+        if constexpr (M == -3) Serial.print(F("kg")), Serial.print(T);
+    }
+    if constexpr (L < 0) {
+        if constexpr (L == -1) Serial.print(m1);
+        if constexpr (L == -2) Serial.print(m2);
+        if constexpr (L == -3) Serial.print(F("m")), Serial.print(T);
+    }
+    if constexpr (T < 0) {
+        if constexpr (T == -1) Serial.print(s1);
+        if constexpr (T == -2) Serial.print(s2);
+        if constexpr (T == -3) Serial.print(F("s")), Serial.print(T);
+    }
 }
 
 inline void print_done(f_ptr str, size_t gape = 10) {
@@ -70,7 +127,7 @@ inline void print_impl(PGM_P fmt, size_t idx, T&& val, Args... args) {
     if (fmt[idx] == '{') {
         if (fmt[idx + 1] == '}') {
             if constexpr (is_quantity_v<T>) {
-                Serial.print(val.v);
+                print_quantity(val);
             } else {
                 Serial.print(val);
             }
