@@ -3,8 +3,8 @@
 
 namespace peripherals {
 
-dev_oled1362 oled1362{ OLED_CS, OLED_DC, OLED_RST }; // SPI
-dev_oled1306 oled1306{};                             // IIC
+// dev_oled1362 oled1362{ OLED_CS, OLED_DC, OLED_RESET }; // SPI
+// dev_oled1306 oled1306{};                               // IIC
 
 ModulinoButtons buttons{}; // IIC
 ModulinoBuzzer buzzer{};   // IIC
@@ -12,8 +12,8 @@ ModulinoMovement imu{};    // IIC
 ModulinoKnob knob{};       // IIC
 ModulinoPixels pixels{};   // IIC
 
-Motor motor_l{ ENCODERL_A, ENCODERL_B }; // interrupt
-Motor motor_r{ ENCODERR_A, ENCODERR_B }; // interrupt
+Motor motor_l{ ENCODERL_A, ENCODERL_B, MOTOR_L_DIR, MOTOR_L_EN }; // interrupt
+Motor motor_r{ ENCODERR_A, ENCODERR_B, MOTOR_R_DIR, MOTOR_R_EN }; // interrupt
 
 auto begin() -> void {
 
@@ -57,31 +57,31 @@ auto begin() -> void {
             LOG_SKIP();
     }
 
-    { // oled1362
-        LOG_INFO_START("Initializing OLED1362");
-        if (enable_list.OLED1362) {
-            if (!oled1362.begin())
-                LOG_FAIL();
-            else {
-                oled1362.enable();
-                LOG_DONE();
-            }
-        } else
-            LOG_SKIP();
-    }
+    // { // oled1362
+    //     LOG_INFO_START("Initializing OLED1362");
+    //     if (enable_list.OLED1362) {
+    //         if (!oled1362.begin())
+    //             LOG_FAIL();
+    //         else {
+    //             oled1362.enable();
+    //             LOG_DONE();
+    //         }
+    //     } else
+    //         LOG_SKIP();
+    // }
 
-    { // oled1306
-        LOG_INFO_START("Initializing OLED1306");
-        if (enable_list.OLED1306) {
-            if (!oled1306.begin())
-                LOG_FAIL();
-            else {
-                oled1306.enable();
-                LOG_DONE();
-            }
-        } else
-            LOG_SKIP();
-    }
+    // { // oled1306
+    //     LOG_INFO_START("Initializing OLED1306");
+    //     if (enable_list.OLED1306) {
+    //         if (!oled1306.begin())
+    //             LOG_FAIL();
+    //         else {
+    //             oled1306.enable();
+    //             LOG_DONE();
+    //         }
+    //     } else
+    //         LOG_SKIP();
+    // }
 
     { // buttons
         LOG_INFO_START("Initializing ModulinoButtons");
