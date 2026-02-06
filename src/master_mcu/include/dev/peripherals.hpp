@@ -4,8 +4,6 @@
 #include <Modulino.h>
 
 #include "dev/motor.hpp"
-#include "dev/oled1306.hpp"
-#include "dev/oled1362.hpp"
 
 #include "serial_logger.hpp"
 
@@ -32,9 +30,6 @@ constexpr uint8_t SPI_SS      = D10;
 constexpr uint8_t SPI_MOSI    = D11;
 constexpr uint8_t SPI_MISO    = D12;
 constexpr uint8_t SPI_SCK     = D13;
-
-extern dev_oled1362 oled1362; // SPI
-extern dev_oled1306 oled1306; // IIC
 
 extern ModulinoButtons buttons; // IIC
 extern ModulinoBuzzer buzzer;   // IIC
