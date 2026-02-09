@@ -20,12 +20,12 @@ constexpr uint8_t IIC_SCL = A5;
 
 constexpr uint8_t SERIAL_Rx   = D0;
 constexpr uint8_t SERIAL_Tx   = D1;
-constexpr uint8_t MOTOR_L_DIR = D2;
-constexpr uint8_t MOTOR_L_EN  = D3;
+constexpr uint8_t MOTOR_L_DIR = D6;
+constexpr uint8_t MOTOR_L_EN  = D7;
 constexpr uint8_t MOTOR_R_DIR = D4;
 constexpr uint8_t MOTOR_R_EN  = D5;
-constexpr uint8_t ENCODERL_A  = D6;
-constexpr uint8_t ENCODERL_B  = D7;
+constexpr uint8_t ENCODERL_A  = D2;
+constexpr uint8_t ENCODERL_B  = D3;
 constexpr uint8_t ENCODERR_A  = D8;
 constexpr uint8_t ENCODERR_B  = D9;
 constexpr uint8_t SPI_SS      = D10;

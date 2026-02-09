@@ -1,11 +1,15 @@
 #include <Arduino.h>
 #include "dev/peripherals.hpp"
 
+#include "pid_controller.hpp"
+
 #include "literals.hpp"
 #include <exception>
 
 using namespace ::literals;
 using namespace ::peripherals;
+
+ctrl::pid_controller vel_pid;
 
 MotoronI2C mc;
 
@@ -22,6 +26,11 @@ auto setup() -> void {
     mc.setMaxAcceleration(1, 140);
     mc.setMaxDeceleration(1, 300);
 
+    vel_pid.reset();
+    vel_pid.set_kp(.5);
+    vel_pid.set_ki(1);
+    vel_pid.set_kd(40);
+    vel_pid.set_target(10);
 
     LOG_INFO("dis: {}, vel: {}, acc: {}", 1m, 1m_s, 1m_s / 1s);
     LOG_INFO("mass: {}, momtumum: {}, force: {}", 1kg, 1kg * 1m_s, 1N);
@@ -43,13 +52,10 @@ auto task_10ms() -> void {
         motor_r.calc_velocity(current_time);
     }
 
-    {
-        //PID controller here
-        float target, error, kp, ki, kd;
-        kp = 10;
-        target = 10;
-        error = target - motor_l.get_avel().v;
-        mc.setSpeed(1, error * kp);   
+    { // PID controller here
+        static int16_t velocity = 0;
+        velocity += vel_pid.update(motor_l.get_avel().v, micros() * 1us);
+        mc.setSpeed(1,(int16_t) velocity);   
     }
     time_t t  = micros() - current_time;
     int32_t b = motor_l.get_count();
@@ -70,6 +76,7 @@ auto task_1s() -> void {
 
 auto task_5s() -> void {
     LOG_TRACE("5s task");
+    // mc.setSpeed(1,100);   
 }
 
 auto loop() -> void {
