@@ -8,8 +8,21 @@
 using namespace ::literals;
 using namespace ::peripherals;
 
+MotoronI2C mc;
+
 auto setup() -> void {
     peripherals::begin();
+
+    mc.reinitialize(); // Bytes: 0x96 0x74
+    mc.disableCrc();   // Bytes: 0x8B 0x04 0x7B 0x43
+
+    // Clear the reset flag, which is set after the controller
+    // reinitializes and counts as an error.
+    mc.clearResetFlag(); // Bytes: 0xA9 0x00 0x04
+
+    mc.setMaxAcceleration(1, 140);
+    mc.setMaxDeceleration(1, 300);
+
 
     LOG_INFO("dis: {}, vel: {}, acc: {}", 1m, 1m_s, 1m_s / 1s);
     LOG_INFO("mass: {}, momtumum: {}, force: {}", 1kg, 1kg * 1m_s, 1N);
@@ -33,7 +46,6 @@ auto task_10ms() -> void {
 
     time_t t  = micros() - current_time;
     int32_t b = motor_l.get_count();
-    LOG_INFO("{}, {}", t, b - a);
 }
 
 auto task_100ms() -> void {
@@ -51,6 +63,16 @@ auto task_1s() -> void {
 
 auto task_5s() -> void {
     LOG_TRACE("5s task");
+
+    static bool flag = true;
+
+    flag = !flag;
+
+    if (flag) {
+        mc.setSpeed(1, 800);
+    } else {
+        mc.setSpeed(1, -800);
+    }
 }
 
 auto loop() -> void {

@@ -1,7 +1,9 @@
 #pragma once
 
 #include <Arduino.h>
+
 #include <Modulino.h>
+#include <Motoron.h>
 
 #include "dev/motor.hpp"
 
@@ -9,10 +11,10 @@
 
 namespace peripherals {
 
-// constexpr uint8_t ENCODERL_A = A0;
-// constexpr uint8_t ENCODERL_B = A1;
-// constexpr uint8_t ENCODERR_A = A2;
-// constexpr uint8_t ENCODERR_B = A3;
+// constexpr uint8_t UNUSED       = A0;
+// constexpr uint8_t UNUSED       = A1;
+// constexpr uint8_t UNUSED       = A2;
+// constexpr uint8_t UNUSED       = A3;
 constexpr uint8_t IIC_DTA = A4;
 constexpr uint8_t IIC_SCL = A5;
 
@@ -42,10 +44,9 @@ extern Motor motor_r; // interrupt
 
 struct {
 
-    bool IIC      = false;
+    bool IIC      = true;
+    bool SPI      = false;
     bool Modulino = false;
-    bool OLED1362 = false;
-    bool OLED1306 = false;
     bool Buttons  = false;
     bool Pixels   = false;
     bool Knob     = false;
