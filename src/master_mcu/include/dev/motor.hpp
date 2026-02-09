@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 
+#include "serial_logger.hpp"
+
 #include <literals.hpp>
 using namespace ::literals;
 
@@ -12,12 +14,11 @@ class Motor {
     Motor(uint8_t en_a, uint8_t en_b, uint8_t dir, uint8_t en);
 
     bool begin();
-
-    avel_t calc_velocity();
+    
+    avel_t calc_velocity(time_t current_time);
 
     avel_t get_avel() { return m_ang_vel; }
-
-    static void update_time();
+    int32_t get_count() { return m_count; }
 
     private:
     static void isr(void*);
@@ -28,10 +29,10 @@ class Motor {
     uint8_t m_pin_en;
     uint8_t m_pin_dir;
 
-    int32_t m_count;
-    int32_t m_prev_count;
+    volatile int32_t m_count;
+    volatile int32_t m_prev_count;
 
     avel_t m_ang_vel;
-    static dura_t m_delta_time;
-    static time_t m_prev_time;
+    dura_t m_delta_time;
+    time_t m_prev_time;
 };

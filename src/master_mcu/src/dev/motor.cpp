@@ -2,14 +2,12 @@
 
 #include <Arduino.h>
 
-dura_t Motor::m_delta_time = 0us;
-time_t Motor::m_prev_time  = 0;
-
 Motor::Motor(uint8_t enc_a, uint8_t enc_b, uint8_t dir, uint8_t en)
 : m_pin_enc_a(enc_a), m_pin_enc_b(enc_b),
   m_pin_en(en), m_pin_dir(dir),
   m_count(0), m_prev_count(0),
-  m_ang_vel(0rad_s) {}
+  m_ang_vel(0rad_s),
+  m_delta_time(0s), m_prev_time(0) {}
 
 bool Motor::begin() {
     pinMode(m_pin_enc_a, INPUT_PULLDOWN);
@@ -23,23 +21,32 @@ bool Motor::begin() {
     return true;
 }
 
-avel_t Motor::calc_velocity() {
-    int16_t delta = m_count - m_prev_count;
-    m_prev_count  = m_count;
+avel_t Motor::calc_velocity(time_t current_time) {
 
-    constexpr float GEAR_RATIO = (22.0 / 12.0) * (22.0 / 10.0) * (24.0 / 10.0);
-    constexpr float RAW_CPR    = 48.0;
-    constexpr float CPR_REV    = 1 / (GEAR_RATIO * RAW_CPR);
 
-    m_ang_vel = delta * CPR_REV * TWO_PI / m_delta_time;
-}
+    noInterrupts();
+    int32_t count = m_count;
+    interrupts();
 
-void Motor::update_time() {
-    m_delta_time = (micros() - m_prev_time) * 1us;
-    m_prev_time  = micros();
+    int32_t delta = count - m_prev_count;
+    m_prev_count  = count;
+
+    constexpr float GEAR_RATIO    = (22.f / 12.f) * (22.f / 10.f) * (24.f / 10.f);
+    constexpr float RAW_CPR       = 48.f;
+    constexpr float CPR_REV       = 1 / (GEAR_RATIO * RAW_CPR);
+    constexpr float CONSTANT_PART = CPR_REV * TWO_PI * 1000'000.f;
+
+    if (m_prev_time == current_time) {
+        m_ang_vel.v = 0;
+        return m_ang_vel;
+    }
+
+    m_ang_vel.v = delta * CONSTANT_PART / (float)((uint32_t)(current_time - m_prev_time));
+    m_prev_time = current_time;
 }
 
 void Motor::isr(void* raw_ins) {
+
     Motor* ins = reinterpret_cast<Motor*>(raw_ins);
     if (digitalRead(ins->m_pin_enc_a) == digitalRead(ins->m_pin_enc_b)) {
         ins->m_count++;

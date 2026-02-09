@@ -57,32 +57,6 @@ auto begin() -> void {
             LOG_SKIP();
     }
 
-    // { // oled1362
-    //     LOG_INFO_START("Initializing OLED1362");
-    //     if (enable_list.OLED1362) {
-    //         if (!oled1362.begin())
-    //             LOG_FAIL();
-    //         else {
-    //             oled1362.enable();
-    //             LOG_DONE();
-    //         }
-    //     } else
-    //         LOG_SKIP();
-    // }
-
-    // { // oled1306
-    //     LOG_INFO_START("Initializing OLED1306");
-    //     if (enable_list.OLED1306) {
-    //         if (!oled1306.begin())
-    //             LOG_FAIL();
-    //         else {
-    //             oled1306.enable();
-    //             LOG_DONE();
-    //         }
-    //     } else
-    //         LOG_SKIP();
-    // }
-
     { // buttons
         LOG_INFO_START("Initializing ModulinoButtons");
         if (enable_list.Buttons) {
@@ -140,7 +114,7 @@ auto begin() -> void {
     }
 
     { // motor
-        LOG_INFO_START("Initializing Motor (L & R) and Encoder");
+        LOG_INFO_START("Initializing Motor L & R");
         if (enable_list.Motor) {
             if (!motor_l.begin() && motor_r.begin())
                 LOG_FAIL();

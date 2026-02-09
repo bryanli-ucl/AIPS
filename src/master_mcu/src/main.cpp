@@ -23,11 +23,17 @@ auto task_1ms() -> void {
 auto task_10ms() -> void {
     LOG_TRACE("10 ms task");
 
+    time_t current_time = micros();
+    int32_t a           = motor_l.get_count();
+
     { // speed stats
-        Motor::update_time();
-        motor_l.calc_velocity();
-        motor_r.calc_velocity();
+        motor_l.calc_velocity(current_time);
+        motor_r.calc_velocity(current_time);
     }
+
+    time_t t  = micros() - current_time;
+    int32_t b = motor_l.get_count();
+    LOG_INFO("{}, {}", t, b - a);
 }
 
 auto task_100ms() -> void {
@@ -36,12 +42,11 @@ auto task_100ms() -> void {
 
 auto task_500ms() -> void {
     LOG_TRACE("500 ms task");
+    LOG_INFO("Left Motor Status: {}, {}", motor_l.get_avel(), motor_l.get_count());
 }
 
 auto task_1s() -> void {
     LOG_TRACE("1s task");
-
-    LOG_INFO("Motor ang_vel(rad/s): ({}, {})", motor_l.get_avel(), motor_r.get_avel());
 }
 
 auto task_5s() -> void {
@@ -63,7 +68,7 @@ auto loop() -> void {
         current_millis = millis();
         current_micro  = micros();
 
-        if (current_millis - last_1ms_timer >= 1000) {
+        if (current_micro - last_1ms_timer >= 1000) {
             last_1ms_timer = current_micro;
             task_1ms();
         }
