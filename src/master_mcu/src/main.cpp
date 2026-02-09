@@ -1,5 +1,4 @@
 #include <Arduino.h>
-
 #include "dev/peripherals.hpp"
 
 #include "literals.hpp"
@@ -35,7 +34,7 @@ auto task_1ms() -> void {
 
 auto task_10ms() -> void {
     LOG_TRACE("10 ms task");
-
+    
     time_t current_time = micros();
     int32_t a           = motor_l.get_count();
 
@@ -44,6 +43,14 @@ auto task_10ms() -> void {
         motor_r.calc_velocity(current_time);
     }
 
+    {
+        //PID controller here
+        float target, error, kp, ki, kd;
+        kp = 10;
+        target = 10;
+        error = target - motor_l.get_avel().v;
+        mc.setSpeed(1, error * kp);   
+    }
     time_t t  = micros() - current_time;
     int32_t b = motor_l.get_count();
 }
@@ -63,16 +70,6 @@ auto task_1s() -> void {
 
 auto task_5s() -> void {
     LOG_TRACE("5s task");
-
-    static bool flag = true;
-
-    flag = !flag;
-
-    if (flag) {
-        mc.setSpeed(1, 800);
-    } else {
-        mc.setSpeed(1, -800);
-    }
 }
 
 auto loop() -> void {
