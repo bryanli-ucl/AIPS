@@ -16,14 +16,22 @@ auto setup() -> void {
     LOG_INFO("eng: {}, frequency: {}", 1.6kJ, 80Hz);
 }
 
-auto task_100ms() -> void {
-    LOG_TRACE("100 ms task");
+auto task_1ms() -> void {
+    LOG_TRACE("1 ms task");
+}
+
+auto task_10ms() -> void {
+    LOG_TRACE("10 ms task");
 
     { // speed stats
         Motor::update_time();
         motor_l.calc_velocity();
         motor_r.calc_velocity();
     }
+}
+
+auto task_100ms() -> void {
+    LOG_TRACE("100 ms task");
 }
 
 auto task_500ms() -> void {
@@ -43,28 +51,40 @@ auto task_5s() -> void {
 auto loop() -> void {
 
     { // time stats
+        static time_t last_1ms_timer   = -1;
+        static time_t last_10ms_timer  = -1;
         static time_t last_100ms_timer = -1;
         static time_t last_500ms_timer = -1;
         static time_t last_1s_timer    = -1;
         static time_t last_5s_timer    = -1;
-        static time_t current_time;
+        static time_t current_millis;
+        static time_t current_micro;
 
-        current_time = millis();
+        current_millis = millis();
+        current_micro  = micros();
 
-        if (current_time - last_100ms_timer >= 100) {
-            last_100ms_timer = current_time;
+        if (current_millis - last_1ms_timer >= 1000) {
+            last_1ms_timer = current_micro;
+            task_1ms();
+        }
+        if (current_millis - last_10ms_timer >= 10) {
+            last_10ms_timer = current_millis;
+            task_10ms();
+        }
+        if (current_millis - last_100ms_timer >= 100) {
+            last_100ms_timer = current_millis;
             task_100ms();
         }
-        if (current_time - last_500ms_timer >= 500) {
-            last_500ms_timer = current_time;
+        if (current_millis - last_500ms_timer >= 500) {
+            last_500ms_timer = current_millis;
             task_500ms();
         }
-        if (current_time - last_1s_timer >= 1000) {
-            last_1s_timer = current_time;
+        if (current_millis - last_1s_timer >= 1000) {
+            last_1s_timer = current_millis;
             task_1s();
         }
-        if (current_time - last_5s_timer >= 5000) {
-            last_5s_timer = current_time;
+        if (current_millis - last_5s_timer >= 5000) {
+            last_5s_timer = current_millis;
             task_5s();
         }
     }
