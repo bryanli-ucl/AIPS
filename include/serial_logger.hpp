@@ -152,10 +152,39 @@ inline void print_impl(PGM_P fmt, size_t idx, T&& val, Args... args) {
     }
 }
 
-void print_header(f_ptr level, const f_ptr location);
-void print_section(f_ptr str, const uint16_t len = 60);
+inline void begin() {
+    if constexpr (LOG_LEVEL == LOG_LEVEL_OFF)
+        return;
+    Serial.begin(LOG_BAUDRATE);
 
-void begin();
+    unsigned long start = millis();
+    while (!Serial && (millis() - start < 1000)) {
+        delay(10);
+    }
+}
+
+inline void print_header(f_ptr level, const f_ptr location) {
+    if constexpr (LOG_SHOW_LEVEL) {
+        Serial.print(level);
+    }
+    if constexpr (LOG_SHOW_LOCATION) {
+        Serial.print(location);
+    }
+}
+
+inline void print_section(f_ptr str, const uint16_t prev_len, const uint16_t rest_len, const uint16_t len = 60) {
+    for (int i = 0; i < len; i++) Serial.print('=');
+    Serial.println();
+
+    for (int i = 0; i < prev_len; i++) Serial.print('=');
+    Serial.print(str);
+    for (int i = 0; i < rest_len; i++) Serial.print('=');
+    Serial.println();
+
+    for (int i = 0; i < len; i++) Serial.print('=');
+    Serial.println();
+}
+
 
 } // namespace __details
 
@@ -168,7 +197,7 @@ void begin();
 
 #if LOG_LEVEL != LOG_LEVEL_OFF
 #    define LOG_BEGIN() __details::begin();
-#    define LOG_SECTION(str) __details::print_section(F(str))
+#    define LOG_SECTION(str) __details::print_section(F(" " str " "), ((120 - strlen(str) - 2) / 2), ((120 - strlen(str) - 2) / 2 + (120 - strlen(str) - 2) % 2), 120)
 #else
 #    define LOG_BEGIN()
 #    define LOG_SECTION(str)

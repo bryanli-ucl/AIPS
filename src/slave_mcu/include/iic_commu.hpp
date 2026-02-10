@@ -1,6 +1,6 @@
 #pragma once
 
-#include "iic_commu_data.hpp"
+#include "common.hpp"
 
 namespace iic_commu {
 

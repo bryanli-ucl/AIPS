@@ -10,7 +10,6 @@
 
 #include "common.hpp"
 #include "motor.hpp"
-#include "iic_commu_data.hpp"
 #include "serial_logger.hpp"
 
 namespace peripherals {
