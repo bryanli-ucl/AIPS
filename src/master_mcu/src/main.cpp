@@ -1,5 +1,5 @@
-#include <Arduino.h>
 #include "dev/peripherals.hpp"
+#include <Arduino.h>
 
 #include "pid_controller.hpp"
 
@@ -11,30 +11,13 @@ using namespace ::peripherals;
 
 ctrl::pid_controller vel_pid;
 
-MotoronI2C mc;
 
 auto setup() -> void {
     peripherals::begin();
 
-    mc.reinitialize(); // Bytes: 0x96 0x74
-    mc.disableCrc();   // Bytes: 0x8B 0x04 0x7B 0x43
-
-    // Clear the reset flag, which is set after the controller
-    // reinitializes and counts as an error.
-    mc.clearResetFlag(); // Bytes: 0xA9 0x00 0x04
-
-    mc.setMaxAcceleration(1, 140);
-    mc.setMaxDeceleration(1, 300);
-
     vel_pid.reset();
-    vel_pid.set_kp(.5);
-    vel_pid.set_ki(1);
-    vel_pid.set_kd(40);
+    vel_pid.set_paras({ 0.5f, 0.2f, 0.1f });
     vel_pid.set_target(10);
-
-    LOG_INFO("dis: {}, vel: {}, acc: {}", 1m, 1m_s, 1m_s / 1s);
-    LOG_INFO("mass: {}, momtumum: {}, force: {}", 1kg, 1kg * 1m_s, 1N);
-    LOG_INFO("eng: {}, frequency: {}", 1.6kJ, 80Hz);
 }
 
 auto task_1ms() -> void {
@@ -43,22 +26,19 @@ auto task_1ms() -> void {
 
 auto task_10ms() -> void {
     LOG_TRACE("10 ms task");
-    
+
     time_t current_time = micros();
-    int32_t a           = motor_l.get_count();
 
     { // speed stats
-        motor_l.calc_velocity(current_time);
-        motor_r.calc_velocity(current_time);
+        enc_l.calc_velocity(current_time);
+        enc_r.calc_velocity(current_time);
     }
 
     { // PID controller here
         static int16_t velocity = 0;
-        velocity += vel_pid.update(motor_l.get_avel().v, micros() * 1us);
-        mc.setSpeed(1,(int16_t) velocity);   
+        velocity += vel_pid.update(enc_l.get_avel().v, micros() * 1us);
+        motoron.setSpeed(1, (int16_t)velocity);
     }
-    time_t t  = micros() - current_time;
-    int32_t b = motor_l.get_count();
 }
 
 auto task_100ms() -> void {
@@ -67,16 +47,31 @@ auto task_100ms() -> void {
 
 auto task_500ms() -> void {
     LOG_TRACE("500 ms task");
-    LOG_INFO("Left Motor Status: {}, {}", motor_l.get_avel(), motor_l.get_count());
+    // LOG_INFO("knob cnt: {}", knob.get());
+    // LOG_INFO("Left Motor Status: {}, {}", enc_l.get_avel(), enc_l.get_count());
 }
 
 auto task_1s() -> void {
     LOG_TRACE("1s task");
+
+    { // 发送数据到从机
+
+        master_data.value1      = 1;
+        master_data.value2      = -2;
+        master_data.value3      = (micros() * 1us).v;
+        master_data.is_new_data = true;
+
+        Wire.beginTransmission(static_cast<uint8_t>(iic_addrs::SlaveMCU));
+        Wire.write((uint8_t*)&master_data, sizeof(master_data));
+        auto error = Wire.endTransmission();
+
+        if (error != 0)
+            LOG_DEBUG("Transmission Error: {}", error);
+    }
 }
 
 auto task_5s() -> void {
     LOG_TRACE("5s task");
-    // mc.setSpeed(1,100);   
 }
 
 auto loop() -> void {
@@ -119,33 +114,4 @@ auto loop() -> void {
             task_5s();
         }
     }
-
-    // LOG_INFO("{}", digitalRead(ENCODERL_A));
-
-    // Serial.print(digitalRead(D2));
-
-    // static uint32_t counter    = 0;
-    // static uint32_t lastUpdate = 0;
-
-    // if (millis() - lastUpdate >= 1000) {
-    //     lastUpdate = millis();
-
-    //     if (oled1362.is_enable()) {
-    //         LOG_INFO("change disp message 1362");
-
-    //         char line1[32];
-    //         char line2[32];
-    //         char line3[32];
-    //         sprintf(line1, "Count: %lu", counter++);
-    //         sprintf(line2, "Time: %lu s", millis() / 1000);
-    //         sprintf(line3, "Menu: %s", "Device DISP");
-
-    //         oled1362.disp_status(line3, line1, line2);
-    //     }
-
-    //     if (oled1306.is_enable()) {
-    //         LOG_INFO("change disp message 1306");
-    //         oled1306.disp_status("Bryan", "hello", "world");
-    //     }
-    // }
 }

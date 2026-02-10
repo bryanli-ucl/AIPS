@@ -8,13 +8,13 @@
 #include <literals.hpp>
 using namespace ::literals;
 
-class Motor {
+class MotorEncoder {
 
     public:
-    Motor(uint8_t en_a, uint8_t en_b, uint8_t dir, uint8_t en);
+    MotorEncoder(uint8_t en_a, uint8_t en_b);
 
     bool begin();
-    
+
     avel_t calc_velocity(time_t current_time);
 
     avel_t get_avel() { return m_ang_vel; }

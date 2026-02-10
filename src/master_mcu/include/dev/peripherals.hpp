@@ -5,56 +5,66 @@
 #include <Modulino.h>
 #include <Motoron.h>
 
-#include "dev/motor.hpp"
+#include <SPI.h>
+#include <Wire.h>
 
+#include "common.hpp"
+#include "dev/motor.hpp"
+#include "iic_commu_data.hpp"
 #include "serial_logger.hpp"
 
 namespace peripherals {
 
-// constexpr uint8_t UNUSED       = A0;
-// constexpr uint8_t UNUSED       = A1;
-// constexpr uint8_t UNUSED       = A2;
-// constexpr uint8_t UNUSED       = A3;
+constexpr uint8_t _P_A0   = A0;
+constexpr uint8_t _P_A1   = A1;
+constexpr uint8_t _P_A2   = A2;
+constexpr uint8_t _P_A3   = A3;
 constexpr uint8_t IIC_DTA = A4;
 constexpr uint8_t IIC_SCL = A5;
 
-constexpr uint8_t SERIAL_Rx   = D0;
-constexpr uint8_t SERIAL_Tx   = D1;
-constexpr uint8_t MOTOR_L_DIR = D6;
-constexpr uint8_t MOTOR_L_EN  = D7;
-constexpr uint8_t MOTOR_R_DIR = D4;
-constexpr uint8_t MOTOR_R_EN  = D5;
-constexpr uint8_t ENCODERL_A  = D2;
-constexpr uint8_t ENCODERL_B  = D3;
-constexpr uint8_t ENCODERR_A  = D8;
-constexpr uint8_t ENCODERR_B  = D9;
-constexpr uint8_t SPI_SS      = D10;
-constexpr uint8_t SPI_MOSI    = D11;
-constexpr uint8_t SPI_MISO    = D12;
-constexpr uint8_t SPI_SCK     = D13;
+constexpr uint8_t SERIAL_Rx  = D0;
+constexpr uint8_t SERIAL_Tx  = D1;
+constexpr uint8_t ENCODERL_A = D2;
+constexpr uint8_t ENCODERR_A = D3;
+constexpr uint8_t ENCODERL_B = D4;
+constexpr uint8_t ENCODERR_B = D5;
+constexpr uint8_t _P_D6      = D6;
+constexpr uint8_t _P_D7      = D7;
+constexpr uint8_t _P_D8      = D8;
+constexpr uint8_t _P_D9      = D9;
+constexpr uint8_t _P_D10     = D10;
+constexpr uint8_t _P_D11     = D11;
+constexpr uint8_t _P_D12     = D12;
+constexpr uint8_t _P_D13     = D13;
 
-extern ModulinoButtons buttons; // IIC
-extern ModulinoBuzzer buzzer;   // IIC
-extern ModulinoMovement imu;    // IIC
-extern ModulinoKnob knob;       // IIC
-extern ModulinoPixels pixels;   // IIC
+extern ModulinoButtons buttons; // IIC0
+extern ModulinoBuzzer buzzer;   // IIC0
+extern ModulinoMovement imu;    // IIC0
+extern ModulinoKnob knob;       // IIC0
+extern ModulinoPixels pixels;   // IIC0
 
-extern Motor motor_l; // interrupt
-extern Motor motor_r; // interrupt
+extern MotoronI2C motoron; // IIC1
+
+extern MotorEncoder enc_l; // interrupt
+extern MotorEncoder enc_r; // interrupt
+
+
+extern master_iic_data_t master_data;
+extern slave_iic_data_t slave_data;
 
 struct {
 
-    bool IIC      = true;
-    bool SPI      = false;
     bool Modulino = false;
-    bool Buttons  = false;
-    bool Pixels   = false;
-    bool Knob     = false;
-    bool IMU      = false;
+    bool Buttons  = true;
+    bool Pixels   = true;
+    bool Knob     = true;
+    bool IMU      = true;
     bool Buzzer   = false;
+    bool IIC      = true;
     bool Motor    = true;
+    bool Motoron  = true;
 
-} enable_list __packed;
+} constexpr initializing_list;
 
 auto begin() -> void;
 

@@ -42,29 +42,28 @@ class pid_controller {
 
     ~pid_controller() noexcept = default;
 
-    auto update(double val, dura_t now_time) -> double {
-        double dt = now_time.v - m_prev_time.v;
+    auto update(float val, dura_t now_time) -> float {
+        float dt = now_time.v - m_prev_time.v;
         if (m_first_sample) dt = 0;
 
-        double err = m_target - val;
+        float err = m_target - val;
 
-        double p = err * m_kp;
+        float p = err * m_kp;
 
         m_int += err * dt;
-        double i = m_int * m_ki;
+        float i = m_int * m_ki;
 
-        double d = 0;
+        float d = 0;
         if (!m_first_sample) {
-            double der = -(err - m_prev_err) / dt;
-
-            d = der * m_kd;
+            float der = -(err - m_prev_err) / dt;
+            d         = der * m_kd;
         }
 
         m_prev_err     = err;
         m_prev_time    = now_time;
         m_first_sample = false;
 
-        double output = p + i + d;
+        float output = p + i + d;
         return output;
     }
 
@@ -75,16 +74,25 @@ class pid_controller {
     }
 
     auto get_target() noexcept -> const decltype(m_target) { return m_target; }
-    auto set_target(double target) -> void { m_target = target; }
+    auto set_target(float target) -> void { m_target = target; }
+
+    auto get_paras(std::tuple<float, float, float> paras) noexcept -> const std::tuple<float, float, float> {
+        return std::make_tuple(m_kp, m_ki, m_kd);
+    }
+
+    auto set_paras(std::tuple<float, float, float> paras) noexcept -> void {
+        auto [p, i, d] = paras;
+        m_kp = p, m_ki = i, m_kd = d;
+    }
 
     auto get_kp() noexcept -> const decltype(m_kp) { return m_kp; }
-    auto set_kp(double kp) -> void { m_kp = kp; }
+    auto set_kp(float kp) -> void { m_kp = kp; }
 
     auto get_ki() noexcept -> const decltype(m_ki) { return m_ki; }
-    auto set_ki(double ki) -> void { m_ki = ki; }
+    auto set_ki(float ki) -> void { m_ki = ki; }
 
     auto get_kd() noexcept -> const decltype(m_kd) { return m_kd; }
-    auto set_kd(double kd) -> void { m_kd = kd; }
+    auto set_kd(float kd) -> void { m_kd = kd; }
 };
 
 } // namespace ctrl

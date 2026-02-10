@@ -3,17 +3,19 @@
 
 namespace peripherals {
 
-// dev_oled1362 oled1362{ OLED_CS, OLED_DC, OLED_RESET }; // SPI
-// dev_oled1306 oled1306{};                               // IIC
+ModulinoButtons buttons{}; // IIC0
+ModulinoBuzzer buzzer{};   // IIC0
+ModulinoMovement imu{};    // IIC0
+ModulinoKnob knob{};       // IIC0
+ModulinoPixels pixels{};   // IIC0
 
-ModulinoButtons buttons{}; // IIC
-ModulinoBuzzer buzzer{};   // IIC
-ModulinoMovement imu{};    // IIC
-ModulinoKnob knob{};       // IIC
-ModulinoPixels pixels{};   // IIC
+MotoronI2C motoron{}; // IIC1
 
-Motor motor_l{ ENCODERL_A, ENCODERL_B, MOTOR_L_DIR, MOTOR_L_EN }; // interrupt
-Motor motor_r{ ENCODERR_A, ENCODERR_B, MOTOR_R_DIR, MOTOR_R_EN }; // interrupt
+MotorEncoder enc_l{ ENCODERL_A, ENCODERL_B }; // interrupt
+MotorEncoder enc_r{ ENCODERR_A, ENCODERR_B }; // interrupt
+
+master_iic_data_t master_data;
+slave_iic_data_t slave_data;
 
 auto begin() -> void {
 
@@ -22,9 +24,80 @@ auto begin() -> void {
         delay(300); // essential
     }
 
-    { // iic
-        LOG_INFO_START("Initializing IIC");
-        if (enable_list.IIC) {
+    { // board info
+        LOG_SECTION("Arduino Uno R4 Wifi Master Board");
+    }
+
+    { // Modulino
+        LOG_INFO_START("Initializing Modulino");
+        if constexpr (initializing_list.Modulino) {
+            Modulino.begin();
+            delay(100); // essential
+            LOG_DONE();
+
+            { // buttons
+                LOG_INFO_START("Initializing ModulinoButtons");
+                if constexpr (initializing_list.Buttons) {
+                    if (!buttons.begin())
+                        LOG_FAIL();
+                    else
+                        LOG_DONE();
+                } else
+                    LOG_SKIP();
+            }
+
+            { // imu
+                LOG_INFO_START("Initializing ModulinoIMU");
+                if constexpr (initializing_list.IMU) {
+                    if (!imu.begin())
+                        LOG_FAIL();
+                    else
+                        LOG_DONE();
+                } else
+                    LOG_SKIP();
+            }
+
+            { // knob
+                LOG_INFO_START("Initializing ModulinoKnob");
+                if constexpr (initializing_list.Knob) {
+                    if (!knob.begin())
+                        LOG_FAIL();
+                    else
+                        LOG_DONE();
+                } else
+                    LOG_SKIP();
+            }
+
+
+            { // pixels
+                LOG_INFO_START("Initializing ModulinoPixels");
+                if constexpr (initializing_list.Pixels) {
+                    if (!pixels.begin())
+                        LOG_FAIL();
+                    else
+                        LOG_DONE();
+                } else
+                    LOG_SKIP();
+            }
+
+            { // buzzer
+                LOG_INFO_START("Initializing ModulinoBuzzer");
+                if constexpr (initializing_list.Buzzer) {
+                    if (!buzzer.begin())
+                        LOG_FAIL();
+                    else
+                        LOG_DONE();
+                } else
+                    LOG_SKIP();
+            }
+
+        } else
+            LOG_SKIP();
+    }
+
+    { // IIC1
+        LOG_INFO_START("Initializing IIC1");
+        if constexpr (initializing_list.IIC) {
             // iic pinmode (pullup resistor)
             pinMode(SCL, INPUT_PULLUP);
             pinMode(SDA, INPUT_PULLUP);
@@ -33,93 +106,65 @@ auto begin() -> void {
             delay(300);
             LOG_DONE();
 
-            for (byte addr = 0x01; addr < 0x7F; addr++) {
-                Wire.beginTransmission(addr);
-                byte error = Wire.endTransmission();
-                if (error == 0) {
-                    LOG_INFO("Found I2C device at 0x{h}", addr);
+            // scanning iic address
+            if constexpr (true) {
+                for (byte addr = 0x01; addr < 0x20; addr++) {
+                    Wire.beginTransmission(addr);
+                    byte error = Wire.endTransmission();
+                    if (error == 0) {
+                        LOG_INFO("Found I2C device at 0x{h}", addr);
+                    } else {
+                        LOG_INFO("No I2C device at 0x{h}", addr);
+                    }
                 }
             }
-        } else
-            LOG_SKIP();
-    }
 
-    { // Modulino
-        LOG_INFO_START("Initializing Modulino");
-        if (enable_list.Modulino) {
-            pinMode(SCL, INPUT_PULLUP);
-            pinMode(SDA, INPUT_PULLUP);
-            delay(10);
-            Modulino.begin();
-            delay(100); // essential
-            LOG_DONE();
-        } else
-            LOG_SKIP();
-    }
-
-    { // buttons
-        LOG_INFO_START("Initializing ModulinoButtons");
-        if (enable_list.Buttons) {
-            if (!buttons.begin())
-                LOG_FAIL();
+            // Motoron
+            if (Wire.beginTransmission(static_cast<uint8_t>(iic_addrs::Motoron)), Wire.endTransmission() == 0)
+                LOG_INFO("Motoron Connnected");
             else
-                LOG_DONE();
-        } else
-            LOG_SKIP();
-    }
+                LOG_WARN("Motoron Unconnnected");
 
-    { // imu
-        LOG_INFO_START("Initializing ModulinoIMU");
-        if (enable_list.IMU) {
-            if (!imu.begin())
-                LOG_FAIL();
+            // SlaveMCU
+            if (Wire.beginTransmission(static_cast<uint8_t>(iic_addrs::SlaveMCU)), Wire.endTransmission() == 0)
+                LOG_INFO("SlaveMCU Connnected");
             else
-                LOG_DONE();
-        } else
-            LOG_SKIP();
-    }
-
-    { // knob
-        LOG_INFO_START("Initializing ModulinoKnob");
-        if (enable_list.Knob) {
-            if (!knob.begin())
-                LOG_FAIL();
-            else
-                LOG_DONE();
-        } else
-            LOG_SKIP();
-    }
-
-
-    { // pixels
-        LOG_INFO_START("Initializing ModulinoPixels");
-        if (enable_list.Pixels) {
-            if (!pixels.begin())
-                LOG_FAIL();
-            else
-                LOG_DONE();
-        } else
-            LOG_SKIP();
-    }
-
-    { // buzzer
-        LOG_INFO_START("Initializing ModulinoBuzzer");
-        if (enable_list.Buzzer) {
-            if (!buzzer.begin())
-                LOG_FAIL();
-            else
-                LOG_DONE();
+                LOG_WARN("SlaveMCU Unconnnected");
+            LOG_INFO("sizeof(master_data): {}", sizeof(master_data));
+            LOG_INFO("sizeof(slave_data): {}", sizeof(slave_data));
         } else
             LOG_SKIP();
     }
 
     { // motor
         LOG_INFO_START("Initializing Motor L & R");
-        if (enable_list.Motor) {
-            if (!motor_l.begin() && motor_r.begin())
+        if constexpr (initializing_list.Motor) {
+            if (!enc_l.begin() && enc_r.begin())
                 LOG_FAIL();
             else
                 LOG_DONE();
+        } else
+            LOG_SKIP();
+    }
+
+    { // motoron
+        LOG_INFO_START("Initializing Motor Controller");
+        if constexpr (initializing_list.Motoron) {
+
+            motoron.reinitialize(); // Bytes: 0x96 0x74
+            motoron.disableCrc();   // Bytes: 0x8B 0x04 0x7B 0x43
+
+            // Clear the reset flag, which is set after the controller
+            // reinitializes and counts as an error.
+            motoron.clearResetFlag(); // Bytes: 0xA9 0x00 0x04
+
+            motoron.setMaxAcceleration(1, 140);
+            motoron.setMaxDeceleration(1, 300);
+            motoron.setMaxAcceleration(2, 140);
+            motoron.setMaxDeceleration(2, 300);
+
+            LOG_DONE();
+
         } else
             LOG_SKIP();
     }

@@ -15,7 +15,7 @@ auto begin() -> void {
 
     { // SPI
         LOG_INFO_START("Initializing SPI");
-        if (enable_list.SPI) {
+        if (initializing_list.SPI) {
             delay(10);
             SPI.begin();
             delay(300);
@@ -26,29 +26,33 @@ auto begin() -> void {
 
     { // iic
         LOG_INFO_START("Initializing IIC");
-        if (enable_list.IIC) {
+        if (initializing_list.IIC) {
             // iic pinmode (pullup resistor)
             pinMode(SCL, INPUT_PULLUP);
             pinMode(SDA, INPUT_PULLUP);
             delay(10);
-            Wire.begin();
+
+            Wire.begin(iic_addrs::SlaveMCU);
             delay(300);
+
             LOG_DONE();
 
-            for (byte addr = 0x01; addr < 0x7F; addr++) {
-                Wire.beginTransmission(addr);
-                byte error = Wire.endTransmission();
-                if (error == 0) {
-                    LOG_INFO("Found I2C device at 0x{h}", addr);
-                }
+            { // MasterMCU
+                LOG_INFO_START("Initializing MasterBoard IIC Commu");
+                if constexpr (initializing_list.MasterBoard) {
+                    iic_commu::begin();
+                    LOG_DONE();
+                } else
+                    LOG_SKIP();
             }
+
         } else
             LOG_SKIP();
     }
 
     { // oled1362
         LOG_INFO_START("Initializing OLED1362");
-        if (enable_list.OLED1362) {
+        if (initializing_list.OLED1362) {
             if (!oled1362.begin())
                 LOG_FAIL();
             else {
@@ -61,7 +65,7 @@ auto begin() -> void {
 
     { // oled1306
         LOG_INFO_START("Initializing OLED1306");
-        if (enable_list.OLED1306) {
+        if (initializing_list.OLED1306) {
             if (!oled1306.begin())
                 LOG_FAIL();
             else {

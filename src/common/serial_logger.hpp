@@ -166,8 +166,15 @@ void begin();
 
 #if LOG_LEVEL != LOG_LEVEL_OFF
 #    define LOG_BEGIN() __details::begin();
+#    define LOG_SECTION(str)          \
+        do {                          \
+            Serial.println();         \
+            __details::print(F(str)); \
+            Serial.println();         \
+        } while (0)
 #else
 #    define LOG_BEGIN()
+#    define LOG_SECTION(str)
 #endif
 
 #if LOG_LEVEL <= LOG_LEVEL_TRACE
