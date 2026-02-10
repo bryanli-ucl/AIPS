@@ -1,4 +1,4 @@
-#include "dev/oled1362.hpp"
+#include "oled1362.hpp"
 
 #include "serial_logger.hpp"
 

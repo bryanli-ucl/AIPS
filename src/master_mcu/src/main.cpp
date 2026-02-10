@@ -1,7 +1,5 @@
-#include "dev/peripherals.hpp"
+#include "peripherals.hpp"
 #include <Arduino.h>
-
-#include "pid_controller.hpp"
 
 #include "literals.hpp"
 #include <exception>
@@ -9,15 +7,9 @@
 using namespace ::literals;
 using namespace ::peripherals;
 
-ctrl::pid_controller vel_pid;
-
 
 auto setup() -> void {
     peripherals::begin();
-
-    vel_pid.reset();
-    vel_pid.set_paras({ 0.5f, 0.2f, 0.1f });
-    vel_pid.set_target(10);
 }
 
 auto task_1ms() -> void {
@@ -27,17 +19,13 @@ auto task_1ms() -> void {
 auto task_10ms() -> void {
     LOG_TRACE("10 ms task");
 
-    time_t current_time = micros();
+    dura_t current_time = micros() * 1us;
 
     { // speed stats
-        enc_l.calc_velocity(current_time);
-        enc_r.calc_velocity(current_time);
-    }
-
-    { // PID controller here
-        static int16_t velocity = 0;
-        velocity += vel_pid.update(enc_l.get_avel().v, micros() * 1us);
-        motoron.setSpeed(1, (int16_t)velocity);
+        motor_l.calc_velocity(current_time);
+        motor_l.update_power(current_time);
+        motor_r.calc_velocity(current_time);
+        motor_r.update_power(current_time);
     }
 }
 

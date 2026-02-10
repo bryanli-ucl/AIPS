@@ -9,7 +9,7 @@
 #include <Wire.h>
 
 #include "common.hpp"
-#include "dev/motor.hpp"
+#include "motor.hpp"
 #include "iic_commu_data.hpp"
 #include "serial_logger.hpp"
 
@@ -37,6 +37,9 @@ constexpr uint8_t _P_D11     = D11;
 constexpr uint8_t _P_D12     = D12;
 constexpr uint8_t _P_D13     = D13;
 
+constexpr uint8_t MOTOR_L_NUM = 1;
+constexpr uint8_t MOTOR_R_NUM = 2;
+
 extern ModulinoButtons buttons; // IIC0
 extern ModulinoBuzzer buzzer;   // IIC0
 extern ModulinoMovement imu;    // IIC0
@@ -45,8 +48,8 @@ extern ModulinoPixels pixels;   // IIC0
 
 extern MotoronI2C motoron; // IIC1
 
-extern MotorEncoder enc_l; // interrupt
-extern MotorEncoder enc_r; // interrupt
+extern Motor motor_l; // interrupt
+extern Motor motor_r; // interrupt
 
 
 extern master_iic_data_t master_data;

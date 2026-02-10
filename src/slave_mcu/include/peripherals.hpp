@@ -6,9 +6,9 @@
 #include <Wire.h>
 
 #include "common.hpp"
-#include "dev/iic_commu.hpp"
-#include "dev/oled1306.hpp"
-#include "dev/oled1362.hpp"
+#include "iic_commu.hpp"
+#include "oled1306.hpp"
+#include "oled1362.hpp"
 
 #include "serial_logger.hpp"
 

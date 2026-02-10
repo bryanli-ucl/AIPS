@@ -153,6 +153,8 @@ inline void print_impl(PGM_P fmt, size_t idx, T&& val, Args... args) {
 }
 
 void print_header(f_ptr level, const f_ptr location);
+void print_section(f_ptr str, const uint16_t len = 60);
+
 void begin();
 
 } // namespace __details
@@ -166,12 +168,7 @@ void begin();
 
 #if LOG_LEVEL != LOG_LEVEL_OFF
 #    define LOG_BEGIN() __details::begin();
-#    define LOG_SECTION(str)          \
-        do {                          \
-            Serial.println();         \
-            __details::print(F(str)); \
-            Serial.println();         \
-        } while (0)
+#    define LOG_SECTION(str) __details::print_section(F(str))
 #else
 #    define LOG_BEGIN()
 #    define LOG_SECTION(str)

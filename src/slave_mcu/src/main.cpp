@@ -1,7 +1,7 @@
 #include <Arduino.h>
 #include <Wire.h>
 
-#include "dev/peripherals.hpp"
+#include "peripherals.hpp"
 #include "literals.hpp"
 
 using namespace ::peripherals;

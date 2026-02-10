@@ -25,4 +25,19 @@ void print_header(f_ptr level, const f_ptr location) {
     }
 }
 
+void print_section(f_ptr str, const uint16_t len) {
+    for (int i = 0; i < len; i++)
+        Serial.print('=');
+    Serial.println();
+
+    for (int i = 0; i < 10; i++)
+        Serial.print('=');
+    Serial.print(' ');
+    Serial.println(str);
+
+    for (int i = 0; i < len; i++)
+        Serial.print('=');
+    Serial.println();
+}
+
 } // namespace __details

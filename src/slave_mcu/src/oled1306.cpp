@@ -1,5 +1,5 @@
 // oled1306.cpp
-#include "dev/oled1306.hpp"
+#include "oled1306.hpp"
 
 
 dev_oled1306::dev_oled1306(uint8_t width, uint8_t height, uint8_t i2c_addr)

@@ -1,5 +1,5 @@
 // peripherals.cpp
-#include "dev/peripherals.hpp"
+#include "peripherals.hpp"
 
 namespace peripherals {
 
@@ -11,6 +11,12 @@ auto begin() -> void {
     { // logger (Serial)
         LOG_BEGIN();
         delay(300); // essential
+    }
+
+    { // board info
+        LOG_SECTION("Arduino Uno R4 Wifi Slave Board");
+        LOG_INFO("sizeof(master_data): {}", sizeof(master_iic_data_t));
+        LOG_INFO("sizeof(slave_data): {}", sizeof(slave_iic_data_t));
     }
 
     { // SPI

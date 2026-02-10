@@ -1,4 +1,4 @@
-#include "dev/iic_commu.hpp"
+#include "iic_commu.hpp"
 
 #include <Arduino.h>
 #include <Wire.h>

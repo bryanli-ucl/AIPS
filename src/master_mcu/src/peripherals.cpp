@@ -1,5 +1,5 @@
 // peripherals.cpp
-#include "dev/peripherals.hpp"
+#include "peripherals.hpp"
 
 namespace peripherals {
 
@@ -11,8 +11,8 @@ ModulinoPixels pixels{};   // IIC0
 
 MotoronI2C motoron{}; // IIC1
 
-MotorEncoder enc_l{ ENCODERL_A, ENCODERL_B }; // interrupt
-MotorEncoder enc_r{ ENCODERR_A, ENCODERR_B }; // interrupt
+Motor motor_l{ ENCODERL_A, ENCODERL_B, MOTOR_L_NUM, motoron }; // interrupt
+Motor motor_r{ ENCODERR_A, ENCODERR_B, MOTOR_R_NUM, motoron }; // interrupt
 
 master_iic_data_t master_data;
 slave_iic_data_t slave_data;
@@ -26,6 +26,8 @@ auto begin() -> void {
 
     { // board info
         LOG_SECTION("Arduino Uno R4 Wifi Master Board");
+        LOG_INFO("sizeof(master_data): {}", sizeof(master_data));
+        LOG_INFO("sizeof(slave_data): {}", sizeof(slave_data));
     }
 
     { // Modulino
@@ -130,22 +132,11 @@ auto begin() -> void {
                 LOG_INFO("SlaveMCU Connnected");
             else
                 LOG_WARN("SlaveMCU Unconnnected");
-            LOG_INFO("sizeof(master_data): {}", sizeof(master_data));
-            LOG_INFO("sizeof(slave_data): {}", sizeof(slave_data));
+
         } else
             LOG_SKIP();
     }
 
-    { // motor
-        LOG_INFO_START("Initializing Motor L & R");
-        if constexpr (initializing_list.Motor) {
-            if (!enc_l.begin() && enc_r.begin())
-                LOG_FAIL();
-            else
-                LOG_DONE();
-        } else
-            LOG_SKIP();
-    }
 
     { // motoron
         LOG_INFO_START("Initializing Motor Controller");
@@ -164,6 +155,17 @@ auto begin() -> void {
             motoron.setMaxDeceleration(2, 300);
 
             LOG_DONE();
+
+            { // motor
+                LOG_INFO_START("Initializing Motor L & R");
+                if constexpr (initializing_list.Motor) {
+                    if (!motor_l.begin() && motor_r.begin())
+                        LOG_FAIL();
+                    else
+                        LOG_DONE();
+                } else
+                    LOG_SKIP();
+            }
 
         } else
             LOG_SKIP();
