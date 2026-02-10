@@ -8,17 +8,6 @@ dev_oled1306 oled1306{};                             // IIC
 
 auto begin() -> void {
 
-    { // logger (Serial)
-        LOG_BEGIN();
-        delay(300); // essential
-    }
-
-    { // board info
-        LOG_SECTION("Arduino Uno R4 Wifi Slave Board");
-        LOG_INFO("sizeof(master_data): {}", sizeof(master_iic_data_t));
-        LOG_INFO("sizeof(slave_data): {}", sizeof(slave_iic_data_t));
-    }
-
     { // SPI
         LOG_INFO_START("Initializing SPI");
         if (initializing_list.SPI) {
@@ -44,7 +33,7 @@ auto begin() -> void {
             LOG_DONE();
 
             { // MasterMCU
-                LOG_INFO_START("Initializing MasterBoard IIC Commu");
+                LOG_INFO_START("Initializing IIC Commu");
                 if constexpr (initializing_list.MasterBoard) {
                     iic_commu::begin();
                     LOG_DONE();

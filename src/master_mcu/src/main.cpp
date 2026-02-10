@@ -9,7 +9,23 @@ using namespace ::peripherals;
 
 
 auto setup() -> void {
-    peripherals::begin();
+    { // logger (Serial)
+        LOG_BEGIN();
+        delay(300); // essential
+    }
+
+    { // board info
+        LOG_SECTION("ARDUINO UNO R4 WIFI MASTER BOARS");
+        LOG_INFO("sizeof(master_data): {}", sizeof(master_data));
+        LOG_INFO("sizeof(slave_data): {}", sizeof(slave_data));
+    }
+
+    { // init peripherals
+        LOG_SECTION("INITIALIZING PERIPHERALS");
+        peripherals::begin();
+    }
+
+    LOG_SECTION("PROGRAM BEGIN");
 }
 
 auto task_1ms() -> void {
@@ -42,7 +58,7 @@ auto task_500ms() -> void {
 auto task_1s() -> void {
     LOG_TRACE("1s task");
 
-    { // 发送数据到从机
+    { // send data to slave
 
         master_data.value1      = 1;
         master_data.value2      = -2;

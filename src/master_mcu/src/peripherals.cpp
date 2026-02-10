@@ -19,17 +19,6 @@ slave_iic_data_t slave_data;
 
 auto begin() -> void {
 
-    { // logger (Serial)
-        LOG_BEGIN();
-        delay(300); // essential
-    }
-
-    { // board info
-        LOG_SECTION("Arduino Uno R4 Wifi Master Board");
-        LOG_INFO("sizeof(master_data): {}", sizeof(master_data));
-        LOG_INFO("sizeof(slave_data): {}", sizeof(slave_data));
-    }
-
     { // Modulino
         LOG_INFO_START("Initializing Modulino");
         if constexpr (initializing_list.Modulino) {

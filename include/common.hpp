@@ -1,5 +1,6 @@
 #pragma once
 
+#include <stddef.h>
 #include <stdint.h>
 
 namespace iic_addrs {
@@ -32,3 +33,8 @@ struct slave_iic_data_t {
 };
 
 #pragma pack(pop)
+
+template <size_t N>
+constexpr size_t strlen_ce(const char (&)[N]) {
+    return N - 1;
+}

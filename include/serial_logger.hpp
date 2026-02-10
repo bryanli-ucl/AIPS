@@ -104,7 +104,7 @@ inline void print_quantity(Quantity<M, L, T> val) {
     }
 }
 
-inline void print_done(f_ptr str, size_t gape = 10) {
+inline void print_done(f_ptr str, size_t gape = 4) {
     while (gape--) {
         Serial.print('\t');
     }
@@ -197,7 +197,10 @@ inline void print_section(f_ptr str, const uint16_t prev_len, const uint16_t res
 
 #if LOG_LEVEL != LOG_LEVEL_OFF
 #    define LOG_BEGIN() __details::begin();
-#    define LOG_SECTION(str) __details::print_section(F(" " str " "), ((120 - strlen(str) - 2) / 2), ((120 - strlen(str) - 2) / 2 + (120 - strlen(str) - 2) % 2), 120)
+#    define LOG_SECTION(str)                     \
+        __details::print_section(F(" " str " "), \
+        ((120 - strlen_ce(str) - 2) / 2),        \
+        ((120 - strlen_ce(str) - 2) / 2 + (120 - strlen_ce(str) - 2) % 2), 120)
 #else
 #    define LOG_BEGIN()
 #    define LOG_SECTION(str)

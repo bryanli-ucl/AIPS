@@ -8,8 +8,23 @@ using namespace ::peripherals;
 using namespace ::literals;
 
 void setup() {
+    { // logger (Serial)
+        LOG_BEGIN();
+        delay(300); // essential
+    }
 
-    peripherals::begin();
+    { // board info
+        LOG_SECTION("ARDUINO UNO R4 WIFI SLAVE BOARS");
+        LOG_INFO("sizeof(master_data): {}", sizeof(master_iic_data_t));
+        LOG_INFO("sizeof(slave_data): {}", sizeof(slave_iic_data_t));
+    }
+
+    { // init peripherals
+        LOG_SECTION("INITIALIZING PERIPHERALS");
+        peripherals::begin();
+    }
+
+    LOG_SECTION("PROGRAM BEGIN");
 }
 
 void loop() {
