@@ -3,8 +3,8 @@
 #include <Arduino.h>
 #include <Wire.h>
 
-master_iic_data_t iic_commu::master_data;
-slave_iic_data_t iic_commu::slave_data;
+master_to_slave_iic_data_t iic_commu::master_data;
+slave_to_master_iic_data_t iic_commu::slave_data;
 
 auto iic_commu::rec_event_callback(int len) -> void {
     digitalWrite(LED_BUILTIN, HIGH);

@@ -3,6 +3,7 @@
 #include <Arduino.h>
 
 #include <SPI.h>
+#include <WiFiUdp.h>
 #include <Wire.h>
 
 #include "common.hpp"
@@ -36,8 +37,13 @@ constexpr uint8_t SPI_MOSI  = D11;
 constexpr uint8_t SPI_MISO  = D12;
 constexpr uint8_t SPI_SCK   = D13;
 
+constexpr char* NETWORK_SSID        = "";
+constexpr char* NETWORK_PASSWORD    = "";
+constexpr uint16_t NETWORK_UDP_PORT = 1145;
+
 extern dev_oled1362 oled1362; // SPI
 extern dev_oled1306 oled1306; // IIC
+extern WiFiUDP udp;           // WiFi
 
 struct {
 
@@ -51,6 +57,8 @@ struct {
     bool LiDAR = false;
     bool IR    = false;
     bool Servo = false;
+
+    bool WiFi = true;
 
 } constexpr initializing_list;
 

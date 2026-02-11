@@ -1,10 +1,14 @@
 // peripherals.cpp
 #include "peripherals.hpp"
 
+#include <WiFiS3.h>
+
 namespace peripherals {
 
 dev_oled1362 oled1362{ OLED_CS, OLED_DC, OLED_RST }; // SPI
 dev_oled1306 oled1306{};                             // IIC
+
+WiFiUDP udp{}; // Serial WiFi
 
 auto begin() -> void {
 
@@ -66,6 +70,25 @@ auto begin() -> void {
             else {
                 oled1306.enable();
                 LOG_DONE();
+            }
+        } else
+            LOG_SKIP();
+    }
+
+    { // Wifi
+        LOG_INFO_START("Initializing WiFi");
+        if (initializing_list.WiFi) {
+            if (WiFi.begin(NETWORK_PASSWORD, NETWORK_SSID) == WL_CONNECT_FAILED)
+                LOG_FAIL();
+            else {
+
+                do {
+                    delay(500);
+                } while (WiFi.status() != WL_CONNECTED);
+
+                LOG_DONE();
+
+                udp.begin(NETWORK_UDP_PORT);
             }
         } else
             LOG_SKIP();

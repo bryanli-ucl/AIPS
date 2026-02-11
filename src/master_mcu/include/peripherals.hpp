@@ -51,8 +51,8 @@ extern Motor motor_l; // interrupt
 extern Motor motor_r; // interrupt
 
 
-extern master_iic_data_t master_data;
-extern slave_iic_data_t slave_data;
+extern master_to_slave_iic_data_t master_data;
+extern slave_to_master_iic_data_t slave_data;
 
 struct {
 

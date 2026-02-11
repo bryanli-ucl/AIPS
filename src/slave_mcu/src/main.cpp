@@ -15,8 +15,8 @@ void setup() {
 
     { // board info
         LOG_SECTION("ARDUINO UNO R4 WIFI SLAVE BOARS");
-        LOG_INFO("sizeof(master_data): {}", sizeof(master_iic_data_t));
-        LOG_INFO("sizeof(slave_data): {}", sizeof(slave_iic_data_t));
+        LOG_INFO("sizeof(master_data): {}", sizeof(master_to_slave_iic_data_t));
+        LOG_INFO("sizeof(slave_data): {}", sizeof(slave_to_master_iic_data_t));
     }
 
     { // init peripherals

@@ -14,8 +14,8 @@ MotoronI2C motoron{}; // IIC1
 Motor motor_l{ ENCODERL_A, ENCODERL_B, MOTOR_L_NUM, motoron }; // interrupt
 Motor motor_r{ ENCODERR_A, ENCODERR_B, MOTOR_R_NUM, motoron }; // interrupt
 
-master_iic_data_t master_data;
-slave_iic_data_t slave_data;
+master_to_slave_iic_data_t master_data;
+slave_to_master_iic_data_t slave_data;
 
 auto begin() -> void {
 
