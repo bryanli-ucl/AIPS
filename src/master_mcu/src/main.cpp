@@ -1,12 +1,14 @@
-#include "peripherals.hpp"
 #include <Arduino.h>
 
+#include "kalman_filter.hpp"
 #include "literals.hpp"
-#include <exception>
+#include "peripherals.hpp"
 
 using namespace ::literals;
 using namespace ::peripherals;
 
+Kalman_Filter angle_pitch_kf;
+PID_Controller angle_pid;
 
 auto setup() -> void {
     { // logger (Serial)
@@ -25,6 +27,23 @@ auto setup() -> void {
         peripherals::begin();
     }
 
+    { // init paras
+        LOG_SECTION("INITIALIZING Parameters");
+
+        LOG_INFO("Angle Ring PID");
+
+        angle_pid.reset();
+        angle_pid.set_paras({ 700.f, 5.f, 40.f });
+        angle_pid.set_target(0.0);
+
+        LOG_INFO("Velocity Ring PID");
+        motor_l.set_target_avel(0rad_s);
+        motor_l.set_paras({ 10.f, .3f, 4.f });
+
+        motor_r.set_target_avel(0rad_s);
+        motor_r.set_paras({ 10.f, .3f, 4.f });
+    }
+
     LOG_SECTION("PROGRAM BEGIN");
 }
 
@@ -35,13 +54,33 @@ auto task_1ms() -> void {
 auto task_10ms() -> void {
     LOG_TRACE("10 ms task");
 
-    dura_t current_time = micros() * 1us;
+    dura_t dt = 10ms;
 
-    { // speed stats
-        motor_l.calc_velocity(current_time);
-        motor_l.update_power(current_time);
-        motor_r.calc_velocity(current_time);
-        motor_r.update_power(current_time);
+    { // pid angle ring
+        imu.update();
+
+        float gyro_y  = imu.getPitch() * DEG_TO_RAD;
+        float accel_x = imu.getX();
+        float accel_z = imu.getZ();
+
+        float accel_mag = sqrt(accel_x * accel_x + accel_z * accel_z);
+        float accel_ang = -atan2(accel_x, accel_z);
+
+        float pitch_angle = angle_pitch_kf.update(gyro_y, accel_ang, dt);
+
+        float motor_speed = angle_pid.update(pitch_angle, dt);
+
+        LOG_DEBUG("angle: {}, motor_speed: {}", pitch_angle * RAD_TO_DEG, motor_speed);
+
+        motor_l.set_target_avel(avel_t(motor_speed));
+        motor_r.set_target_avel(avel_t(motor_speed));
+    }
+
+    { // pid speed ring
+        motor_l.calc_velocity(dt);
+        motor_l.update_power(dt);
+        motor_r.calc_velocity(dt);
+        motor_r.update_power(dt);
     }
 }
 

@@ -59,7 +59,6 @@ auto begin() -> void {
                     LOG_SKIP();
             }
 
-
             { // pixels
                 LOG_INFO_START("Initializing ModulinoPixels");
                 if constexpr (initializing_list.Pixels) {

@@ -10,8 +10,7 @@ Motor::Motor(uint8_t enc_a, uint8_t enc_b, uint8_t motor_num, MotoronI2C& motoro
   m_vel_pid(),
   m_motoron(motoron),
   m_ang_vel(0rad_s),
-  m_power(0),
-  m_delta_time(0s), m_prev_time(0) {}
+  m_power(0) {}
 
 bool Motor::begin() {
     pinMode(m_pin_enc_a, INPUT_PULLDOWN);
@@ -25,7 +24,7 @@ bool Motor::begin() {
     return true;
 }
 
-avel_t Motor::calc_velocity(dura_t current_time) {
+avel_t Motor::calc_velocity(dura_t dt) {
 
 
     noInterrupts();
@@ -40,18 +39,12 @@ avel_t Motor::calc_velocity(dura_t current_time) {
     constexpr float CPR_REV       = 1 / (GEAR_RATIO * RAW_CPR);
     constexpr float CONSTANT_PART = CPR_REV * TWO_PI;
 
-    if (m_prev_time == current_time) {
-        m_ang_vel.v = 0;
-        return m_ang_vel;
-    }
-
-    m_ang_vel   = delta * CONSTANT_PART / (current_time - m_prev_time);
-    m_prev_time = current_time;
+    m_ang_vel = delta * CONSTANT_PART / dt;
 }
 
-void Motor::update_power(dura_t current_time) {
+void Motor::update_power(dura_t dt) {
 
-    m_power += m_vel_pid.update(m_ang_vel.v, current_time);
+    m_power += m_vel_pid.update(m_ang_vel.v, dt);
 
     m_motoron.setSpeed(m_motor_num, m_power);
 }

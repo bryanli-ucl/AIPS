@@ -56,7 +56,7 @@ extern slave_iic_data_t slave_data;
 
 struct {
 
-    bool Modulino = false;
+    bool Modulino = true;
     bool Buttons  = true;
     bool Pixels   = true;
     bool Knob     = true;

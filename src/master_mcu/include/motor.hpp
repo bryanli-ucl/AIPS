@@ -23,7 +23,9 @@ class Motor {
     avel_t calc_velocity(dura_t current_time);
     void update_power(dura_t current_time);
 
+    void reset() { m_vel_pid.reset(); }
     void set_target_avel(avel_t v) { m_target_avel = v; }
+    void set_paras(std::tuple<float, float, float> para) { m_vel_pid.set_paras(para); }
     avel_t get_target_avel() { return m_target_avel; }
     avel_t get_avel() { return m_ang_vel; }
     int32_t get_count() { return m_count; }
@@ -32,7 +34,7 @@ class Motor {
     static void isr(void*);
 
     private:
-    ctrl::pid_controller m_vel_pid;
+    PID_Controller m_vel_pid;
     MotoronI2C& m_motoron;
 
     uint8_t m_pin_enc_a;
@@ -46,6 +48,4 @@ class Motor {
 
     int16_t m_power;
     avel_t m_ang_vel;
-    dura_t m_delta_time;
-    dura_t m_prev_time;
 };

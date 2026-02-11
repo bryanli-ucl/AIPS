@@ -4,11 +4,9 @@
 
 #include "literals.hpp"
 
-namespace ctrl {
-
 using namespace ::literals;
 
-class pid_controller {
+class PID_Controller {
     private:
     double m_target;
 
@@ -19,31 +17,28 @@ class pid_controller {
     double m_int;
     double m_prev_err;
 
-    dura_t m_prev_time;
-
     bool m_first_sample;
 
     public:
-    pid_controller() noexcept
+    PID_Controller() noexcept
     : m_target(.0),
       m_kp(.0), m_ki(.0), m_kd(.0),
       m_int(.0),
       m_prev_err(.0),
-      m_prev_time(0s),
       m_first_sample(true) {
     }
 
-    pid_controller(double kp, double ki, double kd) noexcept
-    : pid_controller() {
+    PID_Controller(double kp, double ki, double kd) noexcept
+    : PID_Controller() {
         m_kp = kp;
         m_ki = ki;
         m_kd = kd;
     }
 
-    ~pid_controller() noexcept = default;
+    ~PID_Controller() noexcept = default;
 
-    auto update(float val, dura_t now_time) -> float {
-        float dt = now_time.v - m_prev_time.v;
+    auto update(float val, dura_t rdt) -> float {
+        float dt = rdt.v;
         if (m_first_sample) dt = 0;
 
         float err = m_target - val;
@@ -60,7 +55,6 @@ class pid_controller {
         }
 
         m_prev_err     = err;
-        m_prev_time    = now_time;
         m_first_sample = false;
 
         float output = p + i + d;
@@ -94,5 +88,3 @@ class pid_controller {
     auto get_kd() noexcept -> const decltype(m_kd) { return m_kd; }
     auto set_kd(float kd) -> void { m_kd = kd; }
 };
-
-} // namespace ctrl
