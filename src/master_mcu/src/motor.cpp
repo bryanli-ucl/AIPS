@@ -44,12 +44,16 @@ avel_t Motor::calc_velocity(dura_t dt) {
 
 void Motor::update_power(dura_t dt) {
 
-    m_power += m_vel_pid.update(m_ang_vel.v, dt);
+    m_power = m_vel_pid.update(m_ang_vel.v, dt);
+    // m_power = 1000;÷
+    LOG_INFO("POWER: {}, {}, {}, {}", m_power, m_ang_vel, m_target_avel, m_vel_pid.get_kp());
 
     m_motoron.setSpeed(m_motor_num, m_power);
 }
 
 void Motor::isr(void* raw_ins) {
+
+    while(1);
 
     Motor* ins = reinterpret_cast<Motor*>(raw_ins);
     if (digitalRead(ins->m_pin_enc_a) == digitalRead(ins->m_pin_enc_b)) {

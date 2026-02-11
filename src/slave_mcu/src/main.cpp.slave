@@ -1,6 +1,6 @@
 #include <Arduino.h>
 #include <Wire.h>
-
+#include <WiFiS3.h>
 #include "literals.hpp"
 #include "peripherals.hpp"
 
@@ -30,7 +30,6 @@ void setup() {
 void loop() {
 
     auto& data = iic_commu::master_data;
-
     if (data.is_new_data) {
         data.is_new_data = false;
 
