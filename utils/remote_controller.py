@@ -1,30 +1,20 @@
-"""
-remote_controller.py (Wi-Fi UDP)
-
-Keyboard -> UDP -> Robot
-
-Controls:
-- W/A/S/D : move
-- Space   : stop
-- Shift   : speed up (send 'F' while held)
-- Esc     : stop and exit
-
-Protocol (1 byte per packet):
-'W','A','S','D','X','F'
-"""
-
+import os
 from pynput import keyboard
 import socket
 import time
-import sys
 
 # =======================
-# HARD REQUIREMENT: set these
-ROBOT_IP = "192.168.1.50"   # <-- change to your robot's IP printed on Serial
-ROBOT_PORT = 5005           # must match MCU UDP listening port
-SEND_HZ = 50                # 50 Hz => 20 ms period
+# 必改：填你机器人（WiFi 板子）串口打印的 IP
+ROBOT_IP = "127.0.0.1"
+ROBOT_PORT = 5005          # 必须和 MCU 端 Udp.begin(1145) 一致
+SEND_HZ = 50               # 每秒发送次数（用于按住键持续发）
 # =======================
 
+sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+
+
+
+    
 KEYMAP = {
     'w': b'W',
     'a': b'A',
@@ -37,90 +27,92 @@ BOOST_CMD = b'F'
 
 current_cmd = STOP_CMD
 shift_held = False
+last_send_t = 0.0
 
 
-def send(sock: socket.socket, cmd: bytes) -> None:
-    """Send exactly 1-byte command."""
+def send(cmd: bytes) -> None:
+    """发送 1 字节 UDP 命令到机器人。"""
     try:
         sock.sendto(cmd, (ROBOT_IP, ROBOT_PORT))
     except OSError:
-        # Network hiccups shouldn't crash controller; keep running.
         pass
 
 
-def on_press(key):
-    global current_cmd, shift_held
+def on_press(key) -> None:
+    global current_cmd, shift_held, last_send_t
 
-    # ESC: stop & exit listener
+    # Esc：发送停止并退出监听
     if key == keyboard.Key.esc:
         current_cmd = STOP_CMD
+        send(STOP_CMD)
+        # 返回 False 会停止 Listener
         return False
 
-    # Space: stop (momentary)
+    # Space：停止
     if key == keyboard.Key.space:
         current_cmd = STOP_CMD
+        send(STOP_CMD)
         return
 
-    # Shift: boost while held
+    # Shift：加速（按住有效）
     if key in (keyboard.Key.shift, keyboard.Key.shift_l, keyboard.Key.shift_r):
         shift_held = True
+        send(BOOST_CMD)
         return
 
-    # Normal char keys
+    # 普通键（W/A/S/D）
     if hasattr(key, "char") and key.char:
         c = key.char.lower()
         if c in KEYMAP:
             current_cmd = KEYMAP[c]
+            send(current_cmd)
+        else:
+            print(f"Pressed Unknown char: {key.char}")
+    else:
+        print(f"Pressed Unknown {key}")
 
 
-def on_release(key):
+def on_release(key) -> None:
     global current_cmd, shift_held
 
-    # Release shift -> disable boost
+    # 松开 Shift：取消加速
     if key in (keyboard.Key.shift, keyboard.Key.shift_l, keyboard.Key.shift_r):
         shift_held = False
         return
 
-    # Releasing movement key -> stop (safe default)
+    # 松开方向键：安全起见直接停
     if hasattr(key, "char") and key.char:
         c = key.char.lower()
         if c in KEYMAP:
             current_cmd = STOP_CMD
+            send(STOP_CMD)
 
 
-def main() -> int:
-    # Basic sanity prints (helps debugging)
-    print(f"[remote_controller] Sending UDP to {ROBOT_IP}:{ROBOT_PORT} @ {SEND_HZ} Hz")
-    print("Controls: WASD move | Space stop | Shift boost | Esc exit")
-
-    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    sock.setblocking(False)
-
-    listener = keyboard.Listener(on_press=on_press, on_release=on_release)
-    listener.start()
-
+def tick_send() -> None:
+    """用来在按住方向键时持续发送（不依赖系统键盘 repeat）。"""
+    global last_send_t
+    now = time.time()
     period = 1.0 / float(SEND_HZ)
-
-    try:
-        while listener.is_alive():
-            # If shift held, override command with BOOST_CMD (or you can combine in MCU side)
-            cmd = BOOST_CMD if shift_held else current_cmd
-            send(sock, cmd)
-            time.sleep(period)
-    except KeyboardInterrupt:
-        pass
-    finally:
-        # Always stop robot on exit
-        send(sock, STOP_CMD)
-        try:
-            listener.stop()
-        except Exception:
-            pass
-        sock.close()
-        print("\n[remote_controller] Exited. Sent STOP.")
-
-    return 0
+    if now - last_send_t >= period:
+        last_send_t = now
+        # Shift 按住时额外发 F（不覆盖方向）
+        send(current_cmd)
+        if shift_held:
+            send(BOOST_CMD)
 
 
-if __name__ == "__main__":
-    raise SystemExit(main())
+# 用 pynput 的 Listener 框架（和你截图完全一致）
+with keyboard.Listener(on_press=on_press, on_release=on_release) as listener:
+    # listener.join() 会阻塞，所以我们用循环 + join(0.01) 方式做“边监听边持续发”
+    while listener.is_alive():
+        tick_send()
+        listener.join(0.01)
+
+# 退出时确保停一下
+send(STOP_CMD)
+sock.close()
+
+
+
+
+
