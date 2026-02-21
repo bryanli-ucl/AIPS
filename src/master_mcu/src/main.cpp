@@ -33,7 +33,7 @@ auto setup() -> void {
         LOG_INFO("Angle Ring PID");
 
         angle_pid.reset();
-        angle_pid.set_paras({ 700.f, 5.f, 40.f });
+        angle_pid.set_paras({ 700.f, 1500.f, 40.f });
         angle_pid.set_target(0.0);
 
         LOG_INFO("Velocity Ring PID");

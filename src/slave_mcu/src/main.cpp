@@ -26,9 +26,32 @@ void setup() {
 
     LOG_SECTION("PROGRAM BEGIN");
 }
-
+char ReplyBuffer[] = "acknowledged\n";
+char packetBuffer[256];
 void loop() {
+    int packetSize = udp.parsePacket();
+    if (packetSize) {
+        Serial.print("Received packet of size ");
+        Serial.println(packetSize);
+        Serial.print("From ");
+        IPAddress remoteIp = udp.remoteIP();
+        Serial.print(remoteIp);
+        Serial.print(", port ");
+        Serial.println(udp.remotePort());
 
+        // read the packet into packetBuffer
+        int len = udp.read(packetBuffer, 255);
+        if (len > 0) {
+            packetBuffer[len] = 0;
+        }
+        Serial.println("Contents:");
+        Serial.println(packetBuffer);
+
+        // send a reply, to the IP address and port that sent us the packet we received
+        udp.beginPacket(udp.remoteIP(), udp.remotePort());
+        udp.write(ReplyBuffer);
+        udp.endPacket();
+    }
     auto& data = iic_commu::master_data;
 
     if (data.is_new_data) {
