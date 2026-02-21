@@ -1,6 +1,6 @@
 #include <Arduino.h>
 #include <Wire.h>
-
+#include <WiFiS3.h>
 #include "literals.hpp"
 #include "peripherals.hpp"
 
@@ -53,7 +53,6 @@ void loop() {
         udp.endPacket();
     }
     auto& data = iic_commu::master_data;
-
     if (data.is_new_data) {
         data.is_new_data = false;
 

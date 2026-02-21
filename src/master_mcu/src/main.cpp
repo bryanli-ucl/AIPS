@@ -33,15 +33,20 @@ auto setup() -> void {
         LOG_INFO("Angle Ring PID");
 
         angle_pid.reset();
+<<<<<<< HEAD
         angle_pid.set_paras({ 700.f, 1500.f, 40.f });
         angle_pid.set_target(0.0);
+=======
+        angle_pid.set_paras({ 200.f, 50.f, 40.f });
+        angle_pid.set_target(0.0f);
+>>>>>>> 6fe8b202422152bd1f809bba49aaae0bb34a242d
 
         LOG_INFO("Velocity Ring PID");
-        motor_l.set_target_avel(0rad_s);
-        motor_l.set_paras({ 10.f, .3f, 4.f });
+        motor_l.set_target_avel(20rad_s);
+        motor_l.set_paras({ 500.f, 50.f, 200.f });
 
         motor_r.set_target_avel(0rad_s);
-        motor_r.set_paras({ 10.f, .3f, 4.f });
+        motor_r.set_paras({ 500.f, 50.f, 200.f });
     }
 
     LOG_SECTION("PROGRAM BEGIN");
@@ -59,8 +64,8 @@ auto task_10ms() -> void {
     { // pid angle ring
         imu.update();
 
-        float gyro_y  = imu.getPitch() * DEG_TO_RAD;
-        float accel_x = imu.getX();
+        float gyro_y  = imu.getRoll() * DEG_TO_RAD;
+        float accel_x = imu.getY();
         float accel_z = imu.getZ();
 
         float accel_mag = sqrt(accel_x * accel_x + accel_z * accel_z);
@@ -68,12 +73,21 @@ auto task_10ms() -> void {
 
         float pitch_angle = angle_pitch_kf.update(gyro_y, accel_ang, dt);
 
+        if (fabs(pitch_angle) > 20 * DEG_TO_RAD) {
+            while(1){
+                motoron.setAllSpeedsNow(0);
+                delay(100);
+            }
+        }
+
         float motor_speed = angle_pid.update(pitch_angle, dt);
 
-        LOG_DEBUG("angle: {}, motor_speed: {}", pitch_angle * RAD_TO_DEG, motor_speed);
+        // LOG_DEBUG("angle: {}, motor_speed: {}", pitch_angle * RAD_TO_DEG, motor_speed);
 
-        motor_l.set_target_avel(avel_t(motor_speed));
-        motor_r.set_target_avel(avel_t(motor_speed));
+        // motor_l.set_target_avel(avel_t(motor_speed));
+        motor_l.set_target_avel(10rad_s);
+        motor_r.set_target_avel(10rad_s);
+        // motor_r.set_target_avel(avel_t(-motor_speed));
     }
 
     { // pid speed ring
@@ -90,8 +104,9 @@ auto task_100ms() -> void {
 
 auto task_500ms() -> void {
     LOG_TRACE("500 ms task");
+
     // LOG_INFO("knob cnt: {}", knob.get());
-    // LOG_INFO("Left Motor Status: {}, {}", enc_l.get_avel(), enc_l.get_count());
+    LOG_INFO("Left Motor Status: {}, {}", motor_l.get_avel(), motor_l.get_count());
 }
 
 auto task_1s() -> void {
@@ -99,17 +114,17 @@ auto task_1s() -> void {
 
     { // send data to slave
 
-        master_data.value1      = 1;
-        master_data.value2      = -2;
-        master_data.value3      = (micros() * 1us).v;
-        master_data.is_new_data = true;
+        // master_data.value1      = 1;
+        // master_data.value2      = -2;
+        // master_data.value3      = (micros() * 1us).v;
+        // master_data.is_new_data = true;
 
-        Wire.beginTransmission(static_cast<uint8_t>(iic_addrs::SlaveMCU));
-        Wire.write((uint8_t*)&master_data, sizeof(master_data));
-        auto error = Wire.endTransmission();
+        // Wire.beginTransmission(static_cast<uint8_t>(iic_addrs::SlaveMCU));
+        // Wire.write((uint8_t*)&master_data, sizeof(master_data));
+        // auto error = Wire.endTransmission();
 
-        if (error != 0)
-            LOG_DEBUG("Transmission Error: {}", error);
+        // if (error != 0)
+        //     LOG_DEBUG("Transmission Error: {}", error);
     }
 }
 
