@@ -6,10 +6,13 @@
 #include <WiFiUdp.h>
 #include <Wire.h>
 
+#include "network_pwd.hpp"
+
 #include "common.hpp"
 #include "iic_commu.hpp"
 #include "oled1306.hpp"
 #include "oled1362.hpp"
+#include "udp_commu.hpp"
 
 #include "serial_logger.hpp"
 
@@ -37,13 +40,10 @@ constexpr uint8_t SPI_MOSI  = D11;
 constexpr uint8_t SPI_MISO  = D12;
 constexpr uint8_t SPI_SCK   = D13;
 
-constexpr char* NETWORK_SSID        = "bryan";
-constexpr char* NETWORK_PASSWORD    = "12345678";
-constexpr uint16_t NETWORK_UDP_PORT = 1145;
 
 extern dev_oled1362 oled1362; // SPI
 extern dev_oled1306 oled1306; // IIC
-extern WiFiUDP udp;           // WiFi
+extern WifiCommu udp_comm;    // WiFi
 
 struct {
 

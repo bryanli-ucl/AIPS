@@ -33,13 +33,8 @@ auto setup() -> void {
         LOG_INFO("Angle Ring PID");
 
         angle_pid.reset();
-<<<<<<< HEAD
-        angle_pid.set_paras({ 700.f, 1500.f, 40.f });
-        angle_pid.set_target(0.0);
-=======
         angle_pid.set_paras({ 200.f, 50.f, 40.f });
         angle_pid.set_target(0.0f);
->>>>>>> 6fe8b202422152bd1f809bba49aaae0bb34a242d
 
         LOG_INFO("Velocity Ring PID");
         motor_l.set_target_avel(20rad_s);
@@ -74,7 +69,7 @@ auto task_10ms() -> void {
         float pitch_angle = angle_pitch_kf.update(gyro_y, accel_ang, dt);
 
         if (fabs(pitch_angle) > 20 * DEG_TO_RAD) {
-            while(1){
+            while (1) {
                 motoron.setAllSpeedsNow(0);
                 delay(100);
             }

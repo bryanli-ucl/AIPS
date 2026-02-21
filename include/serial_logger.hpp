@@ -111,6 +111,15 @@ inline void print_done(f_ptr str, size_t gape = 4) {
     Serial.println(str);
 }
 
+template <typename T>
+inline void print_impl_val(T&& val) {
+    Serial.print(val);
+}
+
+inline void print_impl_val(unsigned char* val) {
+    Serial.print(reinterpret_cast<const char*>(val));
+}
+
 inline void print_impl(PGM_P fmt, size_t idx) {
     size_t len = 0;
     while (fmt[idx + len] != '\0') len++;
@@ -129,7 +138,7 @@ inline void print_impl(PGM_P fmt, size_t idx, T&& val, Args... args) {
             if constexpr (is_quantity_v<T>) {
                 print_quantity(val);
             } else {
-                Serial.print(val);
+                print_impl_val(val);
             }
             print_impl(fmt, idx + 2, args...);
             return;
@@ -138,7 +147,14 @@ inline void print_impl(PGM_P fmt, size_t idx, T&& val, Args... args) {
 
             char c = fmt[idx + 1];
 
-            if constexpr (!is_quantity_v<T>) {
+            using DT = std::decay_t<T>;
+
+            if constexpr (std::is_pointer_v<DT>) {
+
+                print_impl_val(val);
+
+            } else if constexpr (!is_quantity_v<T> && !std::is_same_v<DT, String>) {
+
                 switch (c) {
                 case 'h': Serial.print(val, HEX); break;
                 case 'd': Serial.print(val, DEC); break;
@@ -241,16 +257,16 @@ inline void print_section(f_ptr str, const uint16_t prev_len, const uint16_t res
 #endif
 
 #if LOG_LEVEL <= LOG_LEVEL_INFO
-#    define LOG_INFO(fmt, ...)                                      \
-        do {                                                        \
-            __details::print_header(F("[INFO] "), F(LOCATION_STR)); \
-            __details::print(F(fmt), ##__VA_ARGS__);                \
-            Serial.println();                                       \
+#    define LOG_INFO(fmt, ...)                                       \
+        do {                                                         \
+            __details::print_header(F("[INFO ] "), F(LOCATION_STR)); \
+            __details::print(F(fmt), ##__VA_ARGS__);                 \
+            Serial.println();                                        \
         } while (0)
-#    define LOG_INFO_START(fmt, ...)                                \
-        do {                                                        \
-            __details::print_header(F("[INFO] "), F(LOCATION_STR)); \
-            __details::print(F(fmt), ##__VA_ARGS__);                \
+#    define LOG_INFO_START(fmt, ...)                                 \
+        do {                                                         \
+            __details::print_header(F("[INFO ] "), F(LOCATION_STR)); \
+            __details::print(F(fmt), ##__VA_ARGS__);                 \
         } while (0)
 #else
 #    define LOG_INFO(fmt, ...)
@@ -258,16 +274,16 @@ inline void print_section(f_ptr str, const uint16_t prev_len, const uint16_t res
 #endif
 
 #if LOG_LEVEL <= LOG_LEVEL_WARN
-#    define LOG_WARN(fmt, ...)                                      \
-        do {                                                        \
-            __details::print_header(F("[WARN] "), F(LOCATION_STR)); \
-            __details::print(F(fmt), ##__VA_ARGS__);                \
-            Serial.println();                                       \
+#    define LOG_WARN(fmt, ...)                                       \
+        do {                                                         \
+            __details::print_header(F("[WARN ] "), F(LOCATION_STR)); \
+            __details::print(F(fmt), ##__VA_ARGS__);                 \
+            Serial.println();                                        \
         } while (0)
-#    define LOG_WARN_START(fmt, ...)                                \
-        do {                                                        \
-            __details::print_header(F("[WARN] "), F(LOCATION_STR)); \
-            __details::print(F(fmt), ##__VA_ARGS__);                \
+#    define LOG_WARN_START(fmt, ...)                                 \
+        do {                                                         \
+            __details::print_header(F("[WARN ] "), F(LOCATION_STR)); \
+            __details::print(F(fmt), ##__VA_ARGS__);                 \
         } while (0)
 #else
 #    define LOG_WARN(fmt, ...)

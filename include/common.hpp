@@ -14,6 +14,14 @@ constexpr uint8_t Motoron  = 0x10;
 
 #pragma pack(push, 1)
 
+namespace udp_send {
+
+struct recieve_data_t {
+    
+};
+
+}; // namespace udp_send
+
 struct master_to_slave_iic_data_t {
     uint16_t value1;
     int16_t value2;
