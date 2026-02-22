@@ -163,6 +163,14 @@
             <mxPoint y="24" as="offset" />
           </mxGeometry>
         </mxCell>
+        <mxCell id="1bDdptbz4kvFGdoyVNCe-95" edge="1" parent="1" source="1bDdptbz4kvFGdoyVNCe-80" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="1bDdptbz4kvFGdoyVNCe-94">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="460" y="615" />
+            </Array>
+            <mxPoint x="460" y="620" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
         <mxCell id="1bDdptbz4kvFGdoyVNCe-80" parent="1" style="strokeWidth=2;html=1;shape=mxgraph.flowchart.start_2;whiteSpace=wrap;" value="Left&lt;div&gt;Motor&lt;/div&gt;" vertex="1">
           <mxGeometry height="50" width="50" x="435" y="540" as="geometry" />
         </mxCell>
@@ -180,6 +188,14 @@
             <mxPoint y="29" as="offset" />
           </mxGeometry>
         </mxCell>
+        <mxCell id="1bDdptbz4kvFGdoyVNCe-98" edge="1" parent="1" source="1bDdptbz4kvFGdoyVNCe-81" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" target="1bDdptbz4kvFGdoyVNCe-94">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="620" y="615" />
+            </Array>
+            <mxPoint x="620" y="620" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
         <mxCell id="1bDdptbz4kvFGdoyVNCe-81" parent="1" style="strokeWidth=2;html=1;shape=mxgraph.flowchart.start_2;whiteSpace=wrap;" value="Right&lt;div&gt;Motor&lt;/div&gt;" vertex="1">
           <mxGeometry height="50" width="50" x="595" y="540" as="geometry" />
         </mxCell>
@@ -188,6 +204,9 @@
         </mxCell>
         <mxCell id="1bDdptbz4kvFGdoyVNCe-90" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Loop" vertex="1">
           <mxGeometry height="40" width="60" x="510" y="60" as="geometry" />
+        </mxCell>
+        <mxCell id="1bDdptbz4kvFGdoyVNCe-94" parent="1" style="whiteSpace=wrap;html=1;" value="Average&lt;div&gt;Velocity&lt;/div&gt;" vertex="1">
+          <mxGeometry height="30" width="60" x="510" y="600" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>
