@@ -127,6 +127,18 @@
         <mxCell id="1bDdptbz4kvFGdoyVNCe-3" parent="1" style="shape=parallelogram;perimeter=parallelogramPerimeter;whiteSpace=wrap;html=1;fixedSize=1;" value="IMU" vertex="1">
           <mxGeometry height="60" width="120" x="480" y="130" as="geometry" />
         </mxCell>
+        <mxCell id="1bDdptbz4kvFGdoyVNCe-62" edge="1" parent="1" source="1bDdptbz4kvFGdoyVNCe-60" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="1bDdptbz4kvFGdoyVNCe-61">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="1bDdptbz4kvFGdoyVNCe-60" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Start" vertex="1">
+          <mxGeometry height="40" width="60" x="240" y="140" as="geometry" />
+        </mxCell>
+        <mxCell id="1bDdptbz4kvFGdoyVNCe-63" edge="1" parent="1" source="1bDdptbz4kvFGdoyVNCe-61" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" target="1bDdptbz4kvFGdoyVNCe-3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="1bDdptbz4kvFGdoyVNCe-61" parent="1" style="whiteSpace=wrap;html=1;" value="Initialise&lt;div&gt;Peripherals&lt;/div&gt;" vertex="1">
+          <mxGeometry height="60" width="120" x="330" y="130" as="geometry" />
+        </mxCell>
       </root>
     </mxGraphModel>
   </diagram>
