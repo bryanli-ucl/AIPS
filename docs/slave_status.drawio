@@ -4,8 +4,9 @@
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
-        <mxCell id="ddRogLJjmjAwyl1vpi-w-8" edge="1" parent="1" source="ddRogLJjmjAwyl1vpi-w-1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" target="ddRogLJjmjAwyl1vpi-w-5">
+        <mxCell id="ddRogLJjmjAwyl1vpi-w-8" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" target="ddRogLJjmjAwyl1vpi-w-5">
           <mxGeometry relative="1" as="geometry">
+            <mxPoint x="430" y="350" as="sourcePoint" />
             <mxPoint x="240" y="360" as="targetPoint" />
           </mxGeometry>
         </mxCell>
@@ -13,9 +14,6 @@
           <mxGeometry relative="1" x="0.0174" y="1" as="geometry">
             <mxPoint as="offset" />
           </mxGeometry>
-        </mxCell>
-        <mxCell id="ddRogLJjmjAwyl1vpi-w-1" parent="1" style="strokeWidth=2;html=1;shape=mxgraph.flowchart.start_1;whiteSpace=wrap;" value="Wifi" vertex="1">
-          <mxGeometry height="60" width="100" x="430" y="320" as="geometry" />
         </mxCell>
         <mxCell id="ddRogLJjmjAwyl1vpi-w-4" edge="1" parent="1" source="ddRogLJjmjAwyl1vpi-w-2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="ddRogLJjmjAwyl1vpi-w-3">
           <mxGeometry relative="1" as="geometry" />
@@ -42,6 +40,9 @@
         </mxCell>
         <mxCell id="ddRogLJjmjAwyl1vpi-w-7" parent="1" style="shape=parallelogram;perimeter=parallelogramPerimeter;whiteSpace=wrap;html=1;fixedSize=1;" value="OLED 1306" vertex="1">
           <mxGeometry height="60" width="120" x="110" y="440" as="geometry" />
+        </mxCell>
+        <mxCell id="ddRogLJjmjAwyl1vpi-w-12" parent="1" style="shape=parallelogram;perimeter=parallelogramPerimeter;whiteSpace=wrap;html=1;fixedSize=1;" value="WiFi" vertex="1">
+          <mxGeometry height="60" width="120" x="420" y="320" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>
