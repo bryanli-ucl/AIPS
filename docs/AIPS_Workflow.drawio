@@ -1,6 +1,6 @@
 <mxfile host="app.diagrams.net" agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36" version="29.5.1">
   <diagram name="Page-1" id="WT8000W8V93UR5ai_dM1">
-    <mxGraphModel dx="1403" dy="515" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+    <mxGraphModel dx="1178" dy="433" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -28,8 +28,8 @@
         <mxCell id="1bDdptbz4kvFGdoyVNCe-54" edge="1" parent="1" source="1bDdptbz4kvFGdoyVNCe-3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.25;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="1bDdptbz4kvFGdoyVNCe-38">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
-              <mxPoint x="510" y="230" />
-              <mxPoint x="350" y="230" />
+              <mxPoint x="510" y="240" />
+              <mxPoint x="350" y="240" />
             </Array>
             <mxPoint x="350" y="260" as="targetPoint" />
           </mxGeometry>
@@ -88,6 +88,16 @@
         <mxCell id="1bDdptbz4kvFGdoyVNCe-32" parent="1" style="whiteSpace=wrap;html=1;" value="Left Motor PID" vertex="1">
           <mxGeometry height="60" width="120" x="400" y="450" as="geometry" />
         </mxCell>
+        <mxCell id="1bDdptbz4kvFGdoyVNCe-72" edge="1" parent="1" source="1bDdptbz4kvFGdoyVNCe-33" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="620" y="540" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="1bDdptbz4kvFGdoyVNCe-74" connectable="0" parent="1bDdptbz4kvFGdoyVNCe-72" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="Right Motor Power" vertex="1">
+          <mxGeometry relative="1" x="-0.5714" y="-1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
         <mxCell id="1bDdptbz4kvFGdoyVNCe-33" parent="1" style="whiteSpace=wrap;html=1;" value="Right Motor PID" vertex="1">
           <mxGeometry height="60" width="120" x="560" y="450" as="geometry" />
         </mxCell>
@@ -138,6 +148,46 @@
         </mxCell>
         <mxCell id="1bDdptbz4kvFGdoyVNCe-61" parent="1" style="whiteSpace=wrap;html=1;" value="Initialise&lt;div&gt;Peripherals&lt;/div&gt;" vertex="1">
           <mxGeometry height="60" width="120" x="330" y="130" as="geometry" />
+        </mxCell>
+        <mxCell id="1bDdptbz4kvFGdoyVNCe-70" edge="1" parent="1" source="1bDdptbz4kvFGdoyVNCe-32" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.497;entryY=0;entryDx=0;entryDy=0;entryPerimeter=0;">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="459.8499999999999" y="540" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="1bDdptbz4kvFGdoyVNCe-73" connectable="0" parent="1bDdptbz4kvFGdoyVNCe-70" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="Left Motor Power" vertex="1">
+          <mxGeometry relative="1" x="-0.4127" as="geometry">
+            <mxPoint y="1" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="1bDdptbz4kvFGdoyVNCe-86" edge="1" parent="1" source="1bDdptbz4kvFGdoyVNCe-80" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="1bDdptbz4kvFGdoyVNCe-32">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="380" y="480" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="1bDdptbz4kvFGdoyVNCe-87" connectable="0" parent="1bDdptbz4kvFGdoyVNCe-86" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="Left Motor&lt;div&gt;Angular Velocity&lt;/div&gt;" vertex="1">
+          <mxGeometry relative="1" x="0.3025" y="-1" as="geometry">
+            <mxPoint y="24" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="1bDdptbz4kvFGdoyVNCe-80" parent="1" style="strokeWidth=2;html=1;shape=mxgraph.flowchart.start_2;whiteSpace=wrap;" value="Left&lt;div&gt;Motor&lt;/div&gt;" vertex="1">
+          <mxGeometry height="50" width="50" x="435" y="540" as="geometry" />
+        </mxCell>
+        <mxCell id="1bDdptbz4kvFGdoyVNCe-88" edge="1" parent="1" source="1bDdptbz4kvFGdoyVNCe-81" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" target="1bDdptbz4kvFGdoyVNCe-33">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="700" y="565" />
+              <mxPoint x="700" y="480" />
+            </Array>
+            <mxPoint x="700" y="480" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="1bDdptbz4kvFGdoyVNCe-89" connectable="0" parent="1bDdptbz4kvFGdoyVNCe-88" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="Right Motor&lt;div&gt;Angular Velocity&lt;/div&gt;" vertex="1">
+          <mxGeometry relative="1" x="0.3575" as="geometry">
+            <mxPoint y="29" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="1bDdptbz4kvFGdoyVNCe-81" parent="1" style="strokeWidth=2;html=1;shape=mxgraph.flowchart.start_2;whiteSpace=wrap;" value="Right&lt;div&gt;Motor&lt;/div&gt;" vertex="1">
+          <mxGeometry height="50" width="50" x="595" y="540" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>
