@@ -34,19 +34,24 @@ int8_t process_udp_data(int pack_len) {
     if (pack_len == 0)
         return -1;
 
-    LOG_INFO("Received From {}:{}, Packet Size: {}", udp.remoteIP(), udp.remotePort(), pack_len);
+    LOG_TRACE("Received From {}:{}, Packet Size: {}", udp.remoteIP(), udp.remotePort(), pack_len);
 
-    int len = udp.read(buf, 255);
-    if (len > 0) {
-        buf[len] = '\0';
-        len++;
+    int len = udp.read(buf, sizeof(buf));
+
+    if (len != sizeof(PC_to_robot_wifi_data_t)) {
+        LOG_WARN("Error Length UDP pack");
+        return -2;
     }
 
-    LOG_INFO("Received Contents: {}", buf);
+    PC_to_robot_wifi_data_t* data = reinterpret_cast<PC_to_robot_wifi_data_t*>(&buf);
+
+    LOG_DEBUG("Received Contents: {}, {}", data->vel_x, data->vel_y);
 
     udp.beginPacket(udp.remoteIP(), udp.remotePort());
     udp.write("OK");
     udp.endPacket();
+
+    return 0;
 }
 
 int8_t process_iic_data() {

@@ -17,7 +17,6 @@ constexpr uint8_t Motoron  = 0x10;
 namespace udp_send {
 
 struct recieve_data_t {
-    
 };
 
 }; // namespace udp_send
@@ -31,10 +30,8 @@ struct master_to_slave_iic_data_t {
 };
 
 struct slave_to_master_iic_data_t {
-    uint16_t value1;
-    uint16_t value2;
-    uint16_t value3;
-    uint16_t value4;
+    float target_vel;
+    float target_yaw;
     uint8_t check_sum : 7;
     uint8_t is_new_data : 1;
 };
@@ -43,7 +40,8 @@ struct robot_to_PC_wifi_data_t {
 };
 
 struct PC_to_robot_wifi_data_t {
-    float posv[2];
+    float vel_x;
+    float vel_y;
 };
 
 #pragma pack(pop)

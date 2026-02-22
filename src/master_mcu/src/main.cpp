@@ -7,8 +7,10 @@
 using namespace ::literals;
 using namespace ::peripherals;
 
-Kalman_Filter angle_pitch_kf;
-PID_Controller angle_pid;
+Kalman_Filter pitch_angle_kf;
+PID_Controller pitch_pid;
+PID_Controller yaw_pid;
+PID_Controller bot_vel_pid;
 
 auto setup() -> void {
     { // logger (Serial)
@@ -30,71 +32,105 @@ auto setup() -> void {
     { // init paras
         LOG_SECTION("INITIALIZING Parameters");
 
-        LOG_INFO("Angle Ring PID");
+        LOG_INFO("Pitch PID");
 
-        angle_pid.reset();
-        angle_pid.set_paras({ 200.f, 50.f, 40.f });
-        angle_pid.set_target(0.0f);
+        pitch_pid.reset();
+        pitch_pid.set_paras({ 200.f, 50.f, 40.f });
+        pitch_pid.set_target(0.0f);
 
-        LOG_INFO("Velocity Ring PID");
-        motor_l.set_target_avel(20rad_s);
+        LOG_INFO("Motor Velocity PID");
+        motor_l.reset();
         motor_l.set_paras({ 500.f, 50.f, 200.f });
+        motor_l.set_target_avel(0rad_s);
 
-        motor_r.set_target_avel(0rad_s);
+        motor_l.reset();
         motor_r.set_paras({ 500.f, 50.f, 200.f });
+        motor_r.set_target_avel(0rad_s);
+
+        LOG_INFO("Yaw PID");
+        yaw_pid.reset();
+        yaw_pid.set_paras({ 1.f, 0.f, 0.f });
+        yaw_pid.set_target(0);
+
+        LOG_INFO("Bot Vel PID");
+        bot_vel_pid.reset();
+        bot_vel_pid.set_paras({ 1.f, 0.f, 0.f });
+        bot_vel_pid.set_target(0);
     }
 
     LOG_SECTION("PROGRAM BEGIN");
 }
 
-auto task_1ms() -> void {
-    LOG_TRACE("1 ms task");
+auto get_pitch_rad(dura_t dt) -> float {
+
+    float gyro_y  = imu.getRoll() * DEG_TO_RAD; // (rad/s)
+    float accel_x = imu.getY();
+    float accel_z = imu.getZ();
+
+    float accel_ang = -atan2(accel_x, accel_z); // (rad)
+
+    return pitch_angle_kf.update(gyro_y, accel_ang, dt);
 }
 
-auto task_10ms() -> void {
-    LOG_TRACE("10 ms task");
+auto get_yaw_rad(dura_t dt) -> float {
+    float gyro_z = imu.getYaw() * DEG_TO_RAD; // (rad/s)
 
-    dura_t dt = 10ms;
+    static float s_yaw_angle = 0;
+    s_yaw_angle += gyro_z * dt.v;
+    return s_yaw_angle;
+}
 
-    { // pid angle ring
-        imu.update();
-
-        float gyro_y  = imu.getRoll() * DEG_TO_RAD;
-        float accel_x = imu.getY();
-        float accel_z = imu.getZ();
-
-        float accel_mag = sqrt(accel_x * accel_x + accel_z * accel_z);
-        float accel_ang = -atan2(accel_x, accel_z);
-
-        float pitch_angle = angle_pitch_kf.update(gyro_y, accel_ang, dt);
-
-        if (fabs(pitch_angle) > 20 * DEG_TO_RAD) {
-            while (1) {
-                motoron.setAllSpeedsNow(0);
-                delay(100);
-            }
+auto check_fall(float pitch_angle) -> void {
+    constexpr auto FALL_THRESHOLD_RAD = 20 * RAD_TO_DEG;
+    if (fabs(pitch_angle) > FALL_THRESHOLD_RAD) {
+        while (true) {
+            motoron.setAllSpeedsNow(0);
+            delay(200);
         }
-
-        float motor_speed = angle_pid.update(pitch_angle, dt);
-
-        // LOG_DEBUG("angle: {}, motor_speed: {}", pitch_angle * RAD_TO_DEG, motor_speed);
-
-        // motor_l.set_target_avel(avel_t(motor_speed));
-        motor_l.set_target_avel(10rad_s);
-        motor_r.set_target_avel(10rad_s);
-        // motor_r.set_target_avel(avel_t(-motor_speed));
     }
+}
 
-    { // pid speed ring
-        motor_l.calc_velocity(dt);
-        motor_l.update_power(dt);
-        motor_r.calc_velocity(dt);
-        motor_r.update_power(dt);
-    }
+auto task_5ms() -> void {
+    LOG_TRACE("5 ms task");
+    static constexpr dura_t dt = 5ms;
+
+    imu.update();
+
+    // bot vel pid
+    float bot_vel = (motor_r.get_avel().v - motor_l.get_avel().v) * 0.5f;
+
+    float target_pitch = bot_vel_pid.update(bot_vel, dt);
+    target_pitch       = constrain(target_pitch, -5 * DEG_TO_RAD, 5 * DEG_TO_RAD);
+    target_pitch       = 0;
+    pitch_pid.set_target(target_pitch);
+
+
+    // pitch pid
+    float pitch_angle = get_pitch_rad(dt);
+    float target_avel = pitch_pid.update(pitch_angle, dt);
+
+    // safe check
+    check_fall(pitch_angle);
+
+    // yaw pid
+    float yaw_angle = get_yaw_rad(dt);
+    float yaw_corr  = yaw_pid.update(yaw_angle, dt);
+
+    // mix velocity and rotation
+    motor_l.set_target_avel(avel_t((target_avel - yaw_corr)));
+    motor_r.set_target_avel(avel_t(-(target_avel + yaw_corr)));
+
+    // update motor velocity pid
+    motor_l.calc_velocity(dt);
+    motor_l.update_power(dt);
+    motor_r.calc_velocity(dt);
+    motor_r.update_power(dt);
 }
 
 auto task_100ms() -> void {
     LOG_TRACE("100 ms task");
+
+    static constexpr dura_t dt = 100ms;
 }
 
 auto task_500ms() -> void {
@@ -130,25 +166,18 @@ auto task_5s() -> void {
 auto loop() -> void {
 
     { // time stats
-        static time_t last_1ms_timer   = -1;
-        static time_t last_10ms_timer  = -1;
+        static time_t last_5ms_timer   = -1;
         static time_t last_100ms_timer = -1;
         static time_t last_500ms_timer = -1;
         static time_t last_1s_timer    = -1;
         static time_t last_5s_timer    = -1;
         static time_t current_millis;
-        static time_t current_micro;
 
         current_millis = millis();
-        current_micro  = micros();
 
-        if (current_micro - last_1ms_timer >= 1000) {
-            last_1ms_timer = current_micro;
-            task_1ms();
-        }
-        if (current_millis - last_10ms_timer >= 10) {
-            last_10ms_timer = current_millis;
-            task_10ms();
+        if (current_millis - last_5ms_timer >= 5) {
+            last_5ms_timer = current_millis;
+            task_5ms();
         }
         if (current_millis - last_100ms_timer >= 100) {
             last_100ms_timer = current_millis;

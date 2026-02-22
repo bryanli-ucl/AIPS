@@ -1,5 +1,8 @@
 #pragma once
 
+#include <Arduino.h>
+
+#include <math.h>
 #include <stdint.h>
 
 #include "literals.hpp"
@@ -8,14 +11,16 @@ using namespace ::literals;
 
 class PID_Controller {
     private:
-    double m_target;
+    float m_target;
 
-    double m_kp;
-    double m_ki;
-    double m_kd;
+    float m_kp;
+    float m_ki;
+    float m_kd;
 
-    double m_int;
-    double m_prev_err;
+    float m_int;
+    float m_prev_err;
+
+    float m_integral_limit;
 
     bool m_first_sample;
 
@@ -25,6 +30,7 @@ class PID_Controller {
       m_kp(.0), m_ki(.0), m_kd(.0),
       m_int(.0),
       m_prev_err(.0),
+      m_integral_limit(INT32_MAX),
       m_first_sample(true) {
     }
 
@@ -46,19 +52,19 @@ class PID_Controller {
         float p = err * m_kp;
 
         m_int += err * dt;
+        m_int   = constrain(m_int, -m_integral_limit, m_integral_limit);
         float i = m_int * m_ki;
 
         float d = 0;
         if (!m_first_sample) {
-            float der = -(err - m_prev_err) / dt;
+            float der = (err - m_prev_err) / dt;
             d         = der * m_kd;
         }
 
         m_prev_err     = err;
         m_first_sample = false;
 
-        float output = p + i + d;
-        return output;
+        return p + i + d;
     }
 
     auto reset() -> void {
@@ -70,21 +76,15 @@ class PID_Controller {
     auto get_target() noexcept -> const decltype(m_target) { return m_target; }
     auto set_target(float target) -> void { m_target = target; }
 
-    auto get_paras(std::tuple<float, float, float> paras) noexcept -> const std::tuple<float, float, float> {
+    auto set_integral_limit(float limit) -> void { m_integral_limit = limit; }
+    auto get_integral_limit() -> float { return m_integral_limit; }
+
+    auto get_paras() noexcept -> const std::tuple<float, float, float> {
         return std::make_tuple(m_kp, m_ki, m_kd);
     }
 
-    auto set_paras(std::tuple<float, float, float> paras) noexcept -> void {
+    auto set_paras(std::tuple<float, float, float> paras) -> void {
         auto [p, i, d] = paras;
         m_kp = p, m_ki = i, m_kd = d;
     }
-
-    auto get_kp() noexcept -> const decltype(m_kp) { return m_kp; }
-    auto set_kp(float kp) -> void { m_kp = kp; }
-
-    auto get_ki() noexcept -> const decltype(m_ki) { return m_ki; }
-    auto set_ki(float ki) -> void { m_ki = ki; }
-
-    auto get_kd() noexcept -> const decltype(m_kd) { return m_kd; }
-    auto set_kd(float kd) -> void { m_kd = kd; }
 };

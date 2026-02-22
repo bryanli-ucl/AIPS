@@ -11,7 +11,7 @@ class WifiCommu {
     int8_t begin();
 
     private:
-    char* m_net_ssid    = "BD4B Hyperoptic 1Gb Fibre 2.4Ghz";
-    char* m_net_pwd     = "3R9gfN4up9ar";
-    uint16_t m_udp_port = 9999;
+    char* m_net_ssid;
+    char* m_net_pwd;
+    uint16_t m_udp_port;
 };
