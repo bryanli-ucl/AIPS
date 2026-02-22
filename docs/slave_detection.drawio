@@ -49,7 +49,7 @@
         <mxCell id="GLdTiXTRyu34F7rmm5ZS-10" parent="1" style="shape=parallelogram;perimeter=parallelogramPerimeter;whiteSpace=wrap;html=1;fixedSize=1;" value="LiDAR scans envirnoment" vertex="1">
           <mxGeometry height="60" width="120" x="130" y="540" as="geometry" />
         </mxCell>
-        <mxCell id="GLdTiXTRyu34F7rmm5ZS-17" parent="1" style="shape=parallelogram;perimeter=parallelogramPerimeter;whiteSpace=wrap;html=1;fixedSize=1;" value="OLED display" vertex="1">
+        <mxCell id="GLdTiXTRyu34F7rmm5ZS-17" parent="1" style="shape=parallelogram;perimeter=parallelogramPerimeter;whiteSpace=wrap;html=1;fixedSize=1;" value="OLED 1362" vertex="1">
           <mxGeometry height="60" width="120" x="414" y="320" as="geometry" />
         </mxCell>
       </root>
