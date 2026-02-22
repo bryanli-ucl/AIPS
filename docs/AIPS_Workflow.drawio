@@ -47,7 +47,7 @@
             <mxPoint x="3" as="offset" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="1bDdptbz4kvFGdoyVNCe-7" parent="1" style="whiteSpace=wrap;html=1;" value="Bot Speed PID" vertex="1">
+        <mxCell id="1bDdptbz4kvFGdoyVNCe-7" parent="1" style="whiteSpace=wrap;html=1;" value="Bot Velocity PID" vertex="1">
           <mxGeometry height="60" width="120" x="730" y="250" as="geometry" />
         </mxCell>
         <mxCell id="1bDdptbz4kvFGdoyVNCe-14" edge="1" parent="1" source="1bDdptbz4kvFGdoyVNCe-13" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="1bDdptbz4kvFGdoyVNCe-7">
@@ -171,6 +171,11 @@
             <mxPoint x="460" y="620" as="targetPoint" />
           </mxGeometry>
         </mxCell>
+        <mxCell id="1bDdptbz4kvFGdoyVNCe-99" connectable="0" parent="1bDdptbz4kvFGdoyVNCe-95" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="Angular Velocity&lt;div&gt;of Left Motor&lt;/div&gt;" vertex="1">
+          <mxGeometry relative="1" x="0.1253" as="geometry">
+            <mxPoint x="-17" as="offset" />
+          </mxGeometry>
+        </mxCell>
         <mxCell id="1bDdptbz4kvFGdoyVNCe-80" parent="1" style="strokeWidth=2;html=1;shape=mxgraph.flowchart.start_2;whiteSpace=wrap;" value="Left&lt;div&gt;Motor&lt;/div&gt;" vertex="1">
           <mxGeometry height="50" width="50" x="435" y="540" as="geometry" />
         </mxCell>
@@ -205,8 +210,25 @@
         <mxCell id="1bDdptbz4kvFGdoyVNCe-90" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Loop" vertex="1">
           <mxGeometry height="40" width="60" x="510" y="60" as="geometry" />
         </mxCell>
+        <mxCell id="1bDdptbz4kvFGdoyVNCe-101" edge="1" parent="1" source="1bDdptbz4kvFGdoyVNCe-94" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" target="1bDdptbz4kvFGdoyVNCe-7">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="540" y="660" />
+              <mxPoint x="790" y="660" />
+            </Array>
+            <mxPoint x="560" y="660" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="1bDdptbz4kvFGdoyVNCe-102" connectable="0" parent="1bDdptbz4kvFGdoyVNCe-101" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="Bot Velocity" vertex="1">
+          <mxGeometry relative="1" x="-0.9575" y="-1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
         <mxCell id="1bDdptbz4kvFGdoyVNCe-94" parent="1" style="whiteSpace=wrap;html=1;" value="Average&lt;div&gt;Velocity&lt;/div&gt;" vertex="1">
           <mxGeometry height="30" width="60" x="510" y="600" as="geometry" />
+        </mxCell>
+        <mxCell id="1bDdptbz4kvFGdoyVNCe-100" connectable="0" parent="1" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="Angular Velocity&lt;div&gt;of RightMotor&lt;/div&gt;" vertex="1">
+          <mxGeometry x="620" y="615" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>
