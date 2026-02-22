@@ -42,13 +42,13 @@
         <mxCell id="1bDdptbz4kvFGdoyVNCe-11" edge="1" parent="1" source="1bDdptbz4kvFGdoyVNCe-7" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" target="1bDdptbz4kvFGdoyVNCe-1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="1bDdptbz4kvFGdoyVNCe-12" connectable="0" parent="1bDdptbz4kvFGdoyVNCe-11" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="Target Pitch Angle" vertex="1">
+        <mxCell id="1bDdptbz4kvFGdoyVNCe-12" connectable="0" parent="1bDdptbz4kvFGdoyVNCe-11" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="Target&lt;div&gt;Pitch Angle&lt;/div&gt;" vertex="1">
           <mxGeometry relative="1" x="-0.0267" as="geometry">
             <mxPoint x="3" as="offset" />
           </mxGeometry>
         </mxCell>
         <mxCell id="1bDdptbz4kvFGdoyVNCe-7" parent="1" style="whiteSpace=wrap;html=1;" value="Bot Velocity PID" vertex="1">
-          <mxGeometry height="60" width="120" x="730" y="250" as="geometry" />
+          <mxGeometry height="60" width="120" x="690" y="250" as="geometry" />
         </mxCell>
         <mxCell id="1bDdptbz4kvFGdoyVNCe-14" edge="1" parent="1" source="1bDdptbz4kvFGdoyVNCe-13" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="1bDdptbz4kvFGdoyVNCe-7">
           <mxGeometry relative="1" as="geometry" />
@@ -59,7 +59,7 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="1bDdptbz4kvFGdoyVNCe-13" parent="1" style="shape=parallelogram;perimeter=parallelogramPerimeter;whiteSpace=wrap;html=1;fixedSize=1;" value="IIC&lt;div&gt;Sent by Slave&lt;/div&gt;" vertex="1">
-          <mxGeometry height="60" width="120" x="730" y="140" as="geometry" />
+          <mxGeometry height="60" width="120" x="690" y="130" as="geometry" />
         </mxCell>
         <mxCell id="1bDdptbz4kvFGdoyVNCe-49" edge="1" parent="1" source="1bDdptbz4kvFGdoyVNCe-27" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="1bDdptbz4kvFGdoyVNCe-32">
           <mxGeometry relative="1" as="geometry">
@@ -214,7 +214,8 @@
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
               <mxPoint x="540" y="660" />
-              <mxPoint x="790" y="660" />
+              <mxPoint x="750" y="660" />
+              <mxPoint x="750" y="310" />
             </Array>
             <mxPoint x="560" y="660" as="targetPoint" />
           </mxGeometry>
