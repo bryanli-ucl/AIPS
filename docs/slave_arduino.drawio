@@ -67,10 +67,10 @@
         <mxCell id="B-8CqtbojnkP8lcfI51R-10" parent="1" style="shape=parallelogram;perimeter=parallelogramPerimeter;whiteSpace=wrap;html=1;fixedSize=1;" value="WiFi" vertex="1">
           <mxGeometry height="60" width="120" x="499" y="360" as="geometry" />
         </mxCell>
-        <mxCell id="B-8CqtbojnkP8lcfI51R-13" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Bot Yaw PID" vertex="1">
+        <mxCell id="B-8CqtbojnkP8lcfI51R-13" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="IIC" vertex="1">
           <mxGeometry height="40" width="120" x="60" y="520" as="geometry" />
         </mxCell>
-        <mxCell id="B-8CqtbojnkP8lcfI51R-14" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Bot Velocity PID" vertex="1">
+        <mxCell id="B-8CqtbojnkP8lcfI51R-14" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="IIC" vertex="1">
           <mxGeometry height="40" width="120" x="340" y="520" as="geometry" />
         </mxCell>
         <mxCell id="B-8CqtbojnkP8lcfI51R-17" edge="1" parent="1" source="B-8CqtbojnkP8lcfI51R-13" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" target="B-8CqtbojnkP8lcfI51R-13">
