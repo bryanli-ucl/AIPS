@@ -92,6 +92,14 @@
         <mxCell id="Qa2FUMTT_iO3LxQewHOm-20" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Obstacle&lt;div&gt;Detection&lt;/div&gt;" vertex="1">
           <mxGeometry height="40" width="60" x="570" y="220" as="geometry" />
         </mxCell>
+        <mxCell id="Qa2FUMTT_iO3LxQewHOm-54" edge="1" parent="1" source="Qa2FUMTT_iO3LxQewHOm-23" style="edgeStyle=orthogonalEdgeStyle;shape=wire;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;dashed=1;" target="Qa2FUMTT_iO3LxQewHOm-53">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="Qa2FUMTT_iO3LxQewHOm-55" connectable="0" parent="Qa2FUMTT_iO3LxQewHOm-54" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];dashed=1;" value="Could Not&amp;nbsp;&lt;div&gt;Back to Line&lt;/div&gt;" vertex="1">
+          <mxGeometry relative="1" x="-0.1922" y="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
         <mxCell id="Qa2FUMTT_iO3LxQewHOm-23" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Detour" vertex="1">
           <mxGeometry height="40" width="60" x="410" y="220" as="geometry" />
         </mxCell>
@@ -138,12 +146,16 @@
         <mxCell id="Qa2FUMTT_iO3LxQewHOm-31" edge="1" parent="1" source="Qa2FUMTT_iO3LxQewHOm-23" style="curved=1;endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0;entryY=1;entryDx=0;entryDy=0;" target="Qa2FUMTT_iO3LxQewHOm-20" value="">
           <mxGeometry height="50" relative="1" width="50" as="geometry">
             <Array as="points">
-              <mxPoint x="470" y="280" />
-              <mxPoint x="520" y="290" />
-              <mxPoint x="560" y="280" />
+              <mxPoint x="440" y="290" />
+              <mxPoint x="500" y="270" />
             </Array>
             <mxPoint x="510" y="320" as="sourcePoint" />
             <mxPoint x="560" y="270" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="Qa2FUMTT_iO3LxQewHOm-52" connectable="0" parent="Qa2FUMTT_iO3LxQewHOm-31" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];dashed=1;" value="Could Back to Line&amp;nbsp;" vertex="1">
+          <mxGeometry relative="1" x="-0.0913" as="geometry">
+            <mxPoint x="3" y="1" as="offset" />
           </mxGeometry>
         </mxCell>
         <mxCell id="Qa2FUMTT_iO3LxQewHOm-42" edge="1" parent="1" source="Qa2FUMTT_iO3LxQewHOm-34" style="edgeStyle=orthogonalEdgeStyle;shape=wire;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="Qa2FUMTT_iO3LxQewHOm-50" value="User Collect Cargo&lt;div&gt;and Click Collected&lt;/div&gt;">
@@ -168,6 +180,41 @@
         </mxCell>
         <mxCell id="Qa2FUMTT_iO3LxQewHOm-50" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Set Destination as Origin" vertex="1">
           <mxGeometry height="55" width="88" x="610" y="422.5" as="geometry" />
+        </mxCell>
+        <mxCell id="Qa2FUMTT_iO3LxQewHOm-56" edge="1" parent="1" source="Qa2FUMTT_iO3LxQewHOm-53" style="edgeStyle=orthogonalEdgeStyle;shape=wire;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="270" y="200" />
+              <mxPoint x="220" y="200" />
+              <mxPoint x="220" y="240" />
+            </Array>
+            <mxPoint x="240" y="240" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="Qa2FUMTT_iO3LxQewHOm-57" connectable="0" parent="Qa2FUMTT_iO3LxQewHOm-56" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];dashed=1;" value="No Line&lt;div&gt;Detected&lt;/div&gt;" vertex="1">
+          <mxGeometry relative="1" x="-0.2799" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="Qa2FUMTT_iO3LxQewHOm-53" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Beep" vertex="1">
+          <mxGeometry height="40" width="60" x="240" y="220" as="geometry" />
+        </mxCell>
+        <mxCell id="Qa2FUMTT_iO3LxQewHOm-59" edge="1" parent="1" source="Qa2FUMTT_iO3LxQewHOm-53" style="curved=1;endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" target="Qa2FUMTT_iO3LxQewHOm-20" value="">
+          <mxGeometry height="50" relative="1" width="50" as="geometry">
+            <Array as="points">
+              <mxPoint x="270" y="290" />
+              <mxPoint x="270" y="320" />
+              <mxPoint x="380" y="310" />
+              <mxPoint x="530" y="290" />
+            </Array>
+            <mxPoint x="520" y="330" as="sourcePoint" />
+            <mxPoint x="570" y="280" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="Qa2FUMTT_iO3LxQewHOm-60" connectable="0" parent="Qa2FUMTT_iO3LxQewHOm-59" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];dashed=1;" value="Line Detected" vertex="1">
+          <mxGeometry relative="1" x="-0.4523" y="2" as="geometry">
+            <mxPoint x="-44" y="-34" as="offset" />
+          </mxGeometry>
         </mxCell>
       </root>
     </mxGraphModel>
