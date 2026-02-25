@@ -86,7 +86,7 @@
         </mxCell>
         <mxCell id="Qa2FUMTT_iO3LxQewHOm-28" connectable="0" parent="Qa2FUMTT_iO3LxQewHOm-27" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="No Obstacle&amp;nbsp;&lt;div&gt;Ahead&lt;/div&gt;" vertex="1">
           <mxGeometry relative="1" x="-0.2738" y="1" as="geometry">
-            <mxPoint as="offset" />
+            <mxPoint x="-1" y="17" as="offset" />
           </mxGeometry>
         </mxCell>
         <mxCell id="Qa2FUMTT_iO3LxQewHOm-20" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Obstacle&lt;div&gt;Detection&lt;/div&gt;" vertex="1">
@@ -95,7 +95,30 @@
         <mxCell id="Qa2FUMTT_iO3LxQewHOm-23" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Detour" vertex="1">
           <mxGeometry height="40" width="60" x="410" y="220" as="geometry" />
         </mxCell>
-        <mxCell id="Qa2FUMTT_iO3LxQewHOm-24" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Obstacle&lt;div&gt;Detection&lt;/div&gt;" vertex="1">
+        <mxCell id="Qa2FUMTT_iO3LxQewHOm-32" edge="1" parent="1" source="Qa2FUMTT_iO3LxQewHOm-24" style="shape=wire;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0;exitDx=0;exitDy=0;dashed=1;entryX=0.331;entryY=0.97;entryDx=0;entryDy=0;entryPerimeter=0;" target="Qa2FUMTT_iO3LxQewHOm-20">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="461.2857142857142" y="310" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="Qa2FUMTT_iO3LxQewHOm-33" connectable="0" parent="Qa2FUMTT_iO3LxQewHOm-32" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];dashed=1;" value="Destination&lt;div&gt;Not Reached&lt;/div&gt;" vertex="1">
+          <mxGeometry relative="1" x="0.0918" y="-1" as="geometry">
+            <mxPoint x="-12" y="11" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="Qa2FUMTT_iO3LxQewHOm-35" edge="1" parent="1" source="Qa2FUMTT_iO3LxQewHOm-24" style="edgeStyle=orthogonalEdgeStyle;shape=wire;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;" target="Qa2FUMTT_iO3LxQewHOm-34" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="460" y="430" />
+              <mxPoint x="460" y="430" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="Qa2FUMTT_iO3LxQewHOm-37" connectable="0" parent="Qa2FUMTT_iO3LxQewHOm-35" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];dashed=1;" value="Destination&lt;div&gt;Reached&lt;/div&gt;" vertex="1">
+          <mxGeometry relative="1" x="-0.121" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="Qa2FUMTT_iO3LxQewHOm-24" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Line&lt;div&gt;Following&lt;/div&gt;" vertex="1">
           <mxGeometry height="40" width="60" x="410" y="340" as="geometry" />
         </mxCell>
         <mxCell id="Qa2FUMTT_iO3LxQewHOm-31" edge="1" parent="1" source="Qa2FUMTT_iO3LxQewHOm-23" style="curved=1;endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0;entryY=1;entryDx=0;entryDy=0;" target="Qa2FUMTT_iO3LxQewHOm-20" value="">
@@ -107,6 +130,23 @@
             </Array>
             <mxPoint x="510" y="320" as="sourcePoint" />
             <mxPoint x="560" y="270" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="Qa2FUMTT_iO3LxQewHOm-34" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Wait" vertex="1">
+          <mxGeometry height="40" width="60" x="410" y="430" as="geometry" />
+        </mxCell>
+        <mxCell id="Qa2FUMTT_iO3LxQewHOm-38" edge="1" parent="1" source="Qa2FUMTT_iO3LxQewHOm-34" style="edgeStyle=orthogonalEdgeStyle;shape=wire;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=1;entryDx=0;entryDy=0;dashed=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" target="Qa2FUMTT_iO3LxQewHOm-34">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="480" y="450" />
+              <mxPoint x="480" y="490" />
+              <mxPoint x="440" y="490" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="Qa2FUMTT_iO3LxQewHOm-39" connectable="0" parent="Qa2FUMTT_iO3LxQewHOm-38" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];dashed=1;" value="No Input" vertex="1">
+          <mxGeometry relative="1" x="-0.59" y="1" as="geometry">
+            <mxPoint x="-1" y="28" as="offset" />
           </mxGeometry>
         </mxCell>
       </root>
