@@ -13,7 +13,7 @@
         <mxCell id="Qa2FUMTT_iO3LxQewHOm-16" edge="1" parent="1" source="Qa2FUMTT_iO3LxQewHOm-6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="Qa2FUMTT_iO3LxQewHOm-15">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="Qa2FUMTT_iO3LxQewHOm-17" connectable="0" parent="Qa2FUMTT_iO3LxQewHOm-16" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="User Press&lt;div&gt;Load Cargo&lt;/div&gt;" vertex="1">
+        <mxCell id="Qa2FUMTT_iO3LxQewHOm-17" connectable="0" parent="Qa2FUMTT_iO3LxQewHOm-16" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="User Click&lt;div&gt;Load Cargo&lt;/div&gt;" vertex="1">
           <mxGeometry relative="1" x="-0.1867" y="2" as="geometry">
             <mxPoint x="-10" y="2" as="offset" />
           </mxGeometry>
@@ -132,6 +132,11 @@
             <mxPoint x="560" y="270" as="targetPoint" />
           </mxGeometry>
         </mxCell>
+        <mxCell id="Qa2FUMTT_iO3LxQewHOm-42" edge="1" parent="1" source="Qa2FUMTT_iO3LxQewHOm-34" style="edgeStyle=orthogonalEdgeStyle;shape=wire;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;dashed=1;" target="Qa2FUMTT_iO3LxQewHOm-41" value="User Collect Cargo&lt;div&gt;and Click Collected&lt;/div&gt;">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
         <mxCell id="Qa2FUMTT_iO3LxQewHOm-34" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Wait" vertex="1">
           <mxGeometry height="40" width="60" x="410" y="430" as="geometry" />
         </mxCell>
@@ -148,6 +153,9 @@
           <mxGeometry relative="1" x="-0.59" y="1" as="geometry">
             <mxPoint x="-1" y="28" as="offset" />
           </mxGeometry>
+        </mxCell>
+        <mxCell id="Qa2FUMTT_iO3LxQewHOm-41" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="Wait" vertex="1">
+          <mxGeometry height="40" width="60" x="210" y="430" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>
