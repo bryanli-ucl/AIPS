@@ -1,13 +1,16 @@
+#include <Arduino.h>
+
 #include "literals.hpp"
 #include "peripherals.hpp"
-#include <Arduino.h>
-#include <WiFiS3.h>
-#include <Wire.h>
+#include "task_scheduler.hpp"
 
 using namespace ::peripherals;
 using namespace ::literals;
 
+TaskScheduler scheduler{};
+
 void setup() {
+
     { // logger (Serial)
         LOG_BEGIN();
         delay(300); // essential
@@ -25,49 +28,68 @@ void setup() {
     }
 
     LOG_SECTION("PROGRAM BEGIN");
-}
 
-int8_t process_udp_data(int pack_len) {
+    { // Scheuler Tasks
 
-    static uint8_t buf[256] = {};
+        scheduler.add(50, []() { // UDP
+            static uint8_t buf[256] = {};
 
-    if (pack_len == 0)
-        return -1;
+            int pack_len = udp.parsePacket();
 
-    LOG_TRACE("Received From {}:{}, Packet Size: {}", udp.remoteIP(), udp.remotePort(), pack_len);
+            if (pack_len == 0)
+                return -1;
 
-    int len = udp.read(buf, sizeof(buf));
+            LOG_TRACE("Received From {}:{}, Packet Size: {}", udp.remoteIP(), udp.remotePort(), pack_len);
 
-    if (len != sizeof(PC_to_robot_wifi_data_t)) {
-        LOG_WARN("Error Length UDP pack");
-        return -2;
+            int len = udp.read(buf, sizeof(buf));
+
+            if (len != sizeof(PC_to_robot_wifi_data_t)) {
+                LOG_WARN("Error Length UDP pack");
+                return -2;
+            }
+
+            PC_to_robot_wifi_data_t* data = reinterpret_cast<PC_to_robot_wifi_data_t*>(&buf);
+
+            LOG_DEBUG("Received Contents: {}, {}", data->vel_x, data->vel_y);
+
+            udp.beginPacket(udp.remoteIP(), udp.remotePort());
+            udp.write("AKN");
+            udp.endPacket();
+
+        },
+        "Process UDP");
+
+        scheduler.add(25, []() { // IR
+            static uint16_t sensor_values[IR_CONUT] = {};
+
+            uint16_t pos = qtr.readLineBlack(sensor_values);
+            LOG_DEBUG("Position: {}", pos);
+        },
+        "Process IR");
+
+        scheduler.add(1000, []() { // Print CPU Usage
+            scheduler.print_cpu_usage();
+        },
+        "Print CPU Usage");
+
+        scheduler.add(25, []() { // IIC
+            auto& data = iic_commu::master_data;
+            if (!data.is_new_data) {
+                return -1;
+            }
+
+            data.is_new_data = false;
+
+            LOG_INFO("DATA.value1: {}", data.value1);
+            LOG_INFO("DATA.value2: {}", data.value2);
+            LOG_INFO("DATA.value3: {}", data.value3);
+
+        },
+        "Process IIC");
+        scheduler.reset();
     }
-
-    PC_to_robot_wifi_data_t* data = reinterpret_cast<PC_to_robot_wifi_data_t*>(&buf);
-
-    LOG_DEBUG("Received Contents: {}, {}", data->vel_x, data->vel_y);
-
-    udp.beginPacket(udp.remoteIP(), udp.remotePort());
-    udp.write("OK");
-    udp.endPacket();
-
-    return 0;
-}
-
-int8_t process_iic_data() {
-    auto& data = iic_commu::master_data;
-    if (!data.is_new_data) {
-        return -1;
-    }
-
-    data.is_new_data = false;
-
-    LOG_INFO("DATA.value1: {}", data.value1);
-    LOG_INFO("DATA.value2: {}", data.value2);
-    LOG_INFO("DATA.value3: {}", data.value3);
 }
 
 void loop() {
-    process_udp_data(udp.parsePacket());
-    process_iic_data();
+    scheduler.tick(millis());
 }

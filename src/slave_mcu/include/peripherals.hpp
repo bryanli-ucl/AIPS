@@ -6,6 +6,11 @@
 #include <WiFiUdp.h>
 #include <Wire.h>
 
+#include <WiFiS3.h>
+#include <Wire.h>
+
+#include <QTRSensors.h>
+
 #include "network_pwd.hpp"
 
 #include "common.hpp"
@@ -38,12 +43,16 @@ constexpr uint8_t OLED_DC   = D9;
 constexpr uint8_t OLED_CS   = D10;
 constexpr uint8_t SPI_MOSI  = D11;
 constexpr uint8_t SPI_MISO  = D12;
+constexpr uint8_t IR_CTRL   = D12;
 constexpr uint8_t SPI_SCK   = D13;
+
+constexpr uint8_t IR_CONUT = 9;
 
 
 extern dev_oled1362 oled1362; // SPI
 extern dev_oled1306 oled1306; // IIC
 extern WifiCommu udp_comm;    // WiFi
+extern QTRSensors qtr;        // IR Sensors
 
 struct {
 
@@ -55,7 +64,7 @@ struct {
     bool MasterBoard = true;
 
     bool LiDAR = false;
-    bool IR    = false;
+    bool IR    = true;
     bool Servo = false;
 
     bool WiFi = true;

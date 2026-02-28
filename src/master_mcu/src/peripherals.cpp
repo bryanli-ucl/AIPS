@@ -9,7 +9,7 @@ ModulinoMovement imu{};    // IIC0
 ModulinoKnob knob{};       // IIC0
 ModulinoPixels pixels{};   // IIC0
 
-MotoronI2C motoron{}; // IIC1
+MotoronI2C motoron{ iic_addrs::Motoron }; // IIC1
 
 Motor motor_l{ ENCODERL_A, ENCODERL_B, MOTOR_L_NUM, motoron }; // interrupt
 Motor motor_r{ ENCODERR_A, ENCODERR_B, MOTOR_R_NUM, motoron }; // interrupt
@@ -23,7 +23,8 @@ auto begin() -> void {
         LOG_INFO_START("Initializing Modulino");
         if constexpr (initializing_list.Modulino) {
             Modulino.begin();
-            delay(100); // essential
+            Wire1.setClock(400'000); // 400kHZ
+            delay(100);              // essential
             LOG_DONE();
 
             { // buttons
@@ -93,6 +94,8 @@ auto begin() -> void {
             pinMode(SDA, INPUT_PULLUP);
             delay(10);
             Wire.begin();
+            Wire.setClock(400'000); // 400kHz
+            // Wire.setClock(100'000); // 100kHz
             delay(300);
             LOG_DONE();
 
@@ -142,6 +145,8 @@ auto begin() -> void {
             motoron.setMaxAcceleration(2, 140);
             motoron.setMaxDeceleration(2, 300);
 
+            motoron.clearMotorFaultUnconditional();
+
             LOG_DONE();
 
             { // motor
@@ -149,8 +154,10 @@ auto begin() -> void {
                 if constexpr (initializing_list.Motor) {
                     if (!motor_l.begin() && motor_r.begin())
                         LOG_FAIL();
-                    else
+                    else {
                         LOG_DONE();
+                        LOG_INFO("Motoron Initialized at 0x{h}", motoron.getAddress());
+                    }
                 } else
                     LOG_SKIP();
             }

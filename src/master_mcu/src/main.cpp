@@ -65,7 +65,18 @@ auto setup() -> void {
 
     LOG_SECTION("PROGRAM BEGIN");
 
-    { // Scheduler
+    { // Run Once
+        if constexpr (false) {
+
+
+            while (true) {
+                noInterrupts();
+                delay(100);
+            }
+        }
+    }
+
+    { // Scheduler & Tasks
 
         scheduler.add(200, []() { // Fall Check
             static constexpr dura_t dt        = 200ms;
@@ -78,35 +89,46 @@ auto setup() -> void {
                     LOG_FATAL("Fall Down Halted");
                 }
             }
-        });
+        },
+        "Fall Check");
 
-        scheduler.add(200, []() { // Board Communication
+        scheduler.add(300, []() { // Board Communication
             static constexpr dura_t dt = 200ms;
 
             master_data.value1      = 1;
             master_data.value2      = -2;
             master_data.value3      = dt.v;
             master_data.is_new_data = true;
-
             Wire.beginTransmission(static_cast<uint8_t>(iic_addrs::SlaveMCU));
             Wire.write((uint8_t*)&master_data, sizeof(master_data));
             auto error = Wire.endTransmission();
 
             if (error != 0)
                 LOG_DEBUG("Transmission Error: {}", error);
-        });
+        },
+        "Board Communication");
+
+        scheduler.add(1000, []() { // Print CPU Usage
+            scheduler.print_cpu_usage();
+        },
+        "Print CPU Usage");
 
         scheduler.add(300, []() { // Print Stats
             static constexpr dura_t dt = 300ms;
             LOG_INFO("Left Motor Status: pwr:{}, avel:{}, pos:{}", motor_l.get_power(), motor_l.get_avel(), motor_l.get_count());
             LOG_INFO("Right Motor Status: pwr:{}, avel:{}, pos:{}", motor_r.get_power(), motor_r.get_avel(), motor_r.get_count());
             LOG_INFO("State: Roll{}, Pitch{}, Yaw{}", imu_ctrl.get_roll_deg(), imu_ctrl.get_pitch_deg(), imu_ctrl.get_yaw_deg());
-        });
+        },
+        "Print Stats");
+
+        scheduler.add(5, []() { // Update IMU
+            static constexpr dura_t dt = 5ms;
+            imu_ctrl.update(dt);
+        },
+        "Update IMU");
 
         scheduler.add(5, []() { // Main PID Controller
             static constexpr dura_t dt = 5ms;
-
-            imu_ctrl.update(dt);
 
             // bot vel pid
             float bot_vel = (motor_r.get_avel().v - motor_l.get_avel().v) * 0.5f;
@@ -130,12 +152,20 @@ auto setup() -> void {
             motor_l.set_target_avel(avel_t((target_avel - atanf(yaw_corr) * (1 / TWO_PI))));
             motor_r.set_target_avel(-avel_t((target_avel + atanf(yaw_corr) * (1 / TWO_PI))));
 
-            // update motor velocity pid
+        },
+        "Main PID");
+
+        scheduler.add(5, []() { // update motor velocity pid
+            static constexpr dura_t dt = 5ms;
+
             motor_l.calc_velocity(dt);
             motor_l.update_power(dt);
             motor_r.calc_velocity(dt);
             motor_r.update_power(dt);
-        });
+        },
+        "Update Motor");
+
+        scheduler.reset();
     }
 }
 
