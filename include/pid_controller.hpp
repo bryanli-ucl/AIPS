@@ -2,6 +2,8 @@
 
 #include <Arduino.h>
 
+#include "serial_logger.hpp"
+
 #include <math.h>
 #include <stdint.h>
 
@@ -49,20 +51,25 @@ class PID_Controller {
 
         float err = m_target - val;
 
+        // P
         float p = err * m_kp;
 
+        // I
         m_int += err * dt;
-        m_int   = constrain(m_int, -m_integral_limit, m_integral_limit);
+        m_int = constrain(m_int, -m_integral_limit, m_integral_limit);
+
         float i = m_int * m_ki;
 
+        // D
         float d = 0;
         if (!m_first_sample) {
             float der = (err - m_prev_err) / dt;
             d         = der * m_kd;
         }
-
         m_prev_err     = err;
         m_first_sample = false;
+
+        LOG_TRACE("PID: {}, {}, {}", p, i, d);
 
         return p + i + d;
     }

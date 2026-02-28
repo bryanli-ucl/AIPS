@@ -16,8 +16,7 @@ bool Motor::begin() {
     pinMode(m_pin_enc_a, INPUT_PULLDOWN);
     pinMode(m_pin_enc_b, INPUT_PULLDOWN);
 
-
-    m_vel_pid.set_paras({ 10.f, .4f, 40.f });
+    m_vel_pid.reset();
 
     attachInterruptParam(digitalPinToInterrupt(m_pin_enc_a), Motor::isr, CHANGE, this);
 
@@ -35,28 +34,27 @@ avel_t Motor::calc_velocity(dura_t dt) {
     m_prev_count  = count;
 
     constexpr float GEAR_RATIO    = (22.f / 12.f) * (22.f / 10.f) * (24.f / 10.f);
-    constexpr float RAW_CPR       = 48.f;
+    constexpr float RAW_CPR       = 12.f * 2;
     constexpr float CPR_REV       = 1 / (GEAR_RATIO * RAW_CPR);
     constexpr float CONSTANT_PART = CPR_REV * TWO_PI;
 
     m_ang_vel = delta * CONSTANT_PART / dt;
+
+    return m_ang_vel;
 }
 
 void Motor::update_power(dura_t dt) {
 
-    m_power = m_vel_pid.update(m_ang_vel.v, dt);
-    // m_power = 1000;÷
-    LOG_INFO("POWER: {}, {}, {}, {}", m_power, m_ang_vel, m_target_avel, m_vel_pid.get_kp());
+    m_power = static_cast<int16_t>(m_vel_pid.update(m_ang_vel.v, dt));
+    LOG_TRACE("POWER{}: {}, {}, {}", m_motor_num, m_power, m_ang_vel, m_target_avel);
 
     m_motoron.setSpeed(m_motor_num, m_power);
 }
 
 void Motor::isr(void* raw_ins) {
 
-    while(1);
-
     Motor* ins = reinterpret_cast<Motor*>(raw_ins);
-    if (digitalRead(ins->m_pin_enc_a) == digitalRead(ins->m_pin_enc_b)) {
+    if (digitalRead(ins->m_pin_enc_a) != digitalRead(ins->m_pin_enc_b)) {
         ins->m_count++;
     } else {
         ins->m_count--;

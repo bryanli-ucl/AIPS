@@ -66,6 +66,10 @@ template <int M, int L, int T>
 constexpr auto operator-(Quantity<M, L, T> lhs, Quantity<M, L, T> rhs) -> Quantity<M, L, T> {
     return Quantity<M, L, T>(lhs.v - rhs.v);
 }
+template <int M, int L, int T>
+constexpr auto operator-(Quantity<M, L, T> lhs) -> Quantity<M, L, T> {
+    return Quantity<M, L, T>(-lhs.v);
+}
 
 /// * / scalar
 template <int M, int L, int T>

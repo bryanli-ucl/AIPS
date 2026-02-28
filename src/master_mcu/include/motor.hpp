@@ -24,14 +24,16 @@ class Motor {
     void update_power(dura_t current_time);
 
     void reset() { m_vel_pid.reset(); }
-    void set_target_avel(avel_t v) { 
+    void set_target_avel(avel_t v) {
         m_target_avel = v;
-        m_vel_pid.set_target(m_target_avel.v); 
+        m_vel_pid.set_target(m_target_avel.v);
     }
     void set_paras(std::tuple<float, float, float> para) { m_vel_pid.set_paras(para); }
+    void set_integral_limit(float lim) { m_vel_pid.set_integral_limit(lim); }
     avel_t get_target_avel() { return m_target_avel; }
     avel_t get_avel() { return m_ang_vel; }
     int32_t get_count() { return m_count; }
+    float get_power() { return m_power; }
 
     private:
     static void isr(void*);
