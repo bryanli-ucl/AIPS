@@ -6,9 +6,9 @@ import struct
 import tkinter as tk
 from tkinter import font as tkfont
 
-MCU_IP = "192.168.1.210"
+MCU_IP = "172.20.10.5"
 MCU_PORT = 9999
-SEND_INTERVAL = 0.05  # 20Hz
+SEND_INTERVAL = 0.1  # 20Hz
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 sock.bind(("", 0))

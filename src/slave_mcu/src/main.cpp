@@ -32,38 +32,44 @@ void setup() {
     { // Scheuler Tasks
 
         scheduler.add(50, []() { // UDP
+            // Check and Recieve data
+
             static uint8_t buf[256] = {};
 
             int pack_len = udp.parsePacket();
-
-            if (pack_len == 0)
-                return -1;
+            if (pack_len == 0) return;
 
             LOG_TRACE("Received From {}:{}, Packet Size: {}", udp.remoteIP(), udp.remotePort(), pack_len);
 
             int len = udp.read(buf, sizeof(buf));
 
-            if (len != sizeof(PC_to_robot_wifi_data_t)) {
+            if (len != 2 * sizeof(float)) {
                 LOG_WARN("Error Length UDP pack");
-                return -2;
+                return;
             }
 
-            PC_to_robot_wifi_data_t* data = reinterpret_cast<PC_to_robot_wifi_data_t*>(&buf);
+            PC_to_robot_wifi_data_t data{
+                .target_vel = {
+                .x = *((float*)(&buf[0])),
+                .y = *((float*)(&buf[4])),
+                .z = 0.f,
+                }
+            };
 
-            LOG_DEBUG("Received Contents: {}, {}", data->vel_x, data->vel_y);
+            // Process Recieved Data
 
-            udp.beginPacket(udp.remoteIP(), udp.remotePort());
-            udp.write("AKN");
-            udp.endPacket();
-
+            if (module_vec_sq(data.target_vel)) {
+                LOG_DEBUG("Received Contents: {}, {}", data.target_vel.x, data.target_vel.y);
+                buzzer.tone(440, 20);
+            }
         },
         "Process UDP");
 
-        scheduler.add(25, []() { // IR
+        scheduler.add(50, []() { // IR
             static uint16_t sensor_values[IR_CONUT] = {};
 
             uint16_t pos = qtr.readLineBlack(sensor_values);
-            LOG_DEBUG("Position: {}", pos);
+            // LOG_DEBUG("Position: {}", pos);
         },
         "Process IR");
 
@@ -71,6 +77,11 @@ void setup() {
             scheduler.print_cpu_usage();
         },
         "Print CPU Usage");
+
+        scheduler.add(2500, []() { // Buzzer
+            // buzzer.tone(440, 100);
+        },
+        "Buzzer Test");
 
         scheduler.add(25, []() { // IIC
             auto& data = iic_commu::master_data;
@@ -86,6 +97,7 @@ void setup() {
 
         },
         "Process IIC");
+
         scheduler.reset();
     }
 }

@@ -2,6 +2,8 @@
 
 #include <Arduino.h>
 
+#include <Modulino.h>
+
 #include <SPI.h>
 #include <WiFiUdp.h>
 #include <Wire.h>
@@ -53,6 +55,7 @@ extern dev_oled1362 oled1362; // SPI
 extern dev_oled1306 oled1306; // IIC
 extern WifiCommu udp_comm;    // WiFi
 extern QTRSensors qtr;        // IR Sensors
+extern ModulinoBuzzer buzzer; // Buzzer
 
 struct {
 
@@ -64,8 +67,11 @@ struct {
     bool MasterBoard = true;
 
     bool LiDAR = false;
-    bool IR    = true;
+    bool IR    = false;
     bool Servo = false;
+
+    bool Modulino = true;
+    bool Buzzer   = true;
 
     bool WiFi = true;
 

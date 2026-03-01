@@ -9,6 +9,7 @@ dev_oled1362 oled1362{ OLED_CS, OLED_DC, OLED_RST };                    // SPI
 dev_oled1306 oled1306{};                                                // IIC
 WifiCommu udp_comm{ NETWORK_SSID, NETWORK_PASSWORD, NETWORK_UDP_PORT }; // WiFi
 QTRSensors qtr{};                                                       // IR Sensors
+ModulinoBuzzer buzzer{};                                                // Buzzer
 
 auto begin() -> void {
 
@@ -70,6 +71,28 @@ auto begin() -> void {
             else {
                 oled1306.enable();
                 LOG_DONE();
+            }
+        } else
+            LOG_SKIP();
+    }
+
+    { // Modulino
+        LOG_INFO_START("Initializing Modulino");
+        if constexpr (initializing_list.Modulino) {
+            Modulino.begin();
+            Wire1.setClock(400'000); // 400kHZ
+            delay(100);              // essential
+            LOG_DONE();
+
+            { // Buzzer
+                LOG_INFO_START("Initializing ModulinoBuzzer");
+                if constexpr (initializing_list.Buzzer) {
+                    if (!buzzer.begin())
+                        LOG_FAIL();
+                    else
+                        LOG_DONE();
+                } else
+                    LOG_SKIP();
             }
         } else
             LOG_SKIP();

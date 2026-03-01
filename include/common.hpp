@@ -1,5 +1,6 @@
 #pragma once
 
+#include <math.h>
 #include <stddef.h>
 #include <stdint.h>
 
@@ -13,6 +14,12 @@ constexpr uint8_t Motoron  = 0x19;
 
 
 #pragma pack(push, 1)
+
+struct Vector {
+    float x;
+    float y;
+    float z;
+};
 
 namespace udp_send {
 
@@ -40,11 +47,23 @@ struct robot_to_PC_wifi_data_t {
 };
 
 struct PC_to_robot_wifi_data_t {
-    float vel_x;
-    float vel_y;
+    Vector target_vel;
 };
 
 #pragma pack(pop)
+
+constexpr Vector normalize(Vector v) {
+    float l = sqrt(v.x * v.x + v.y + v.y + v.z * v.z);
+    return { v.x / l, v.y / l, v.z / l };
+}
+
+constexpr float module_vec(Vector v) {
+    return sqrt(v.x * v.x + v.y + v.y + v.z * v.z);
+}
+
+constexpr float module_vec_sq(Vector v) {
+    return v.x * v.x + v.y + v.y + v.z * v.z;
+}
 
 template <size_t N>
 constexpr size_t strlen_ce(const char (&)[N]) {
