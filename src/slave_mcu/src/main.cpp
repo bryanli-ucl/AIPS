@@ -33,7 +33,6 @@ void setup() {
 
         scheduler.add(50, []() { // UDP
             // Check and Recieve data
-
             static uint8_t buf[256] = {};
 
             int pack_len = udp.parsePacket();
@@ -85,11 +84,10 @@ void setup() {
 
         scheduler.add(25, []() { // IIC
             auto& data = iic_commu::master_data;
-            if (!data.is_new_data) {
+            if (!data.is_new_data)
                 return -1;
-            }
-
-            data.is_new_data = false;
+            else
+                data.is_new_data = false;
 
             LOG_INFO("DATA.value1: {}", data.value1);
             LOG_INFO("DATA.value2: {}", data.value2);
