@@ -43,13 +43,13 @@ auto setup() -> void {
 
         LOG_INFO("Motor Velocity PID");
         motor_l.reset();
-        motor_l.set_paras({ 15.f, 1.f, 1.f });
-        motor_l.set_integral_limit(50.f);
+        motor_l.set_paras({ 30.f, 20.f, 0.f });
+        motor_r.set_integral_limit(800.f);
         motor_l.set_target_avel(0rad_s);
 
         motor_r.reset();
-        motor_r.set_paras({ 15.f, 1.f, 1.f });
-        motor_r.set_integral_limit(50.f);
+        motor_r.set_paras({ 30.f, 20.f, 0.f });
+        motor_r.set_integral_limit(800.f);
         motor_r.set_target_avel(0rad_s);
 
         LOG_INFO("Yaw PID");
@@ -92,7 +92,7 @@ auto setup() -> void {
         },
         "Fall Check");
 
-        scheduler.add(300, []() { // Board Communication
+        scheduler.add(-1, []() { // Board Communication
             static constexpr dura_t dt = 200ms;
 
             master_data.value1      = 1;
@@ -108,16 +108,17 @@ auto setup() -> void {
         },
         "Board Communication");
 
-        scheduler.add(1000, []() { // Print CPU Usage
+        scheduler.add(-1, []() { // Print CPU Usage
             scheduler.print_cpu_usage();
         },
         "Print CPU Usage");
 
-        scheduler.add(300, []() { // Print Stats
+        scheduler.add(100, []() { // Print Stats
             static constexpr dura_t dt = 300ms;
-            LOG_INFO("Left Motor Status: pwr:{}, avel:{}, pos:{}", motor_l.get_power(), motor_l.get_avel(), motor_l.get_count());
-            LOG_INFO("Right Motor Status: pwr:{}, avel:{}, pos:{}", motor_r.get_power(), motor_r.get_avel(), motor_r.get_count());
-            LOG_INFO("State: Roll{}, Pitch{}, Yaw{}", imu_ctrl.get_roll_deg(), imu_ctrl.get_pitch_deg(), imu_ctrl.get_yaw_deg());
+            // LOG_INFO("Left Motor Status: pwr:{}, avel:{}, pos:{}", motor_l.get_power(), motor_l.get_avel(), motor_l.get_count());
+            // LOG_INFO("Right Motor Status: pwr:{}, avel:{}, pos:{}", motor_r.get_power(), motor_r.get_avel(), motor_r.get_count());
+            // LOG_INFO("State: Roll{}, Pitch{}, Yaw{}", imu_ctrl.get_roll_deg(), imu_ctrl.get_pitch_deg(), imu_ctrl.get_yaw_deg());
+            LOG_INFO("{} {}", motor_r.get_avel(), motor_r.get_power());
         },
         "Print Stats");
 
@@ -150,17 +151,21 @@ auto setup() -> void {
 
             // mix velocity and rotation
             yaw_corr = 0;
-            motor_l.set_target_avel(avel_t((target_avel - atanf(yaw_corr) * (1 / TWO_PI))));
-            motor_r.set_target_avel(-avel_t((target_avel + atanf(yaw_corr) * (1 / TWO_PI))));
+            // motor_l.set_target_avel(avel_t((target_avel - atanf(yaw_corr) * (1 / TWO_PI))));
+            // motor_r.set_target_avel(-avel_t((target_avel + atanf(yaw_corr) * (1 / TWO_PI))));
 
         },
         "Main PID");
 
-        scheduler.add(5, []() { // update motor velocity pid
-            static constexpr dura_t dt = 5ms;
+        scheduler.add(50, []() { // update motor velocity pid
+            static constexpr dura_t dt = 50ms;
 
-            motor_l.calc_velocity(dt);
-            motor_l.update_power(dt);
+
+            // motor_l.set_target_avel(-10rad_s);
+            motor_r.set_target_avel(15rad_s);
+
+            // motor_l.calc_velocity(dt);
+            // motor_l.update_power(dt);
             motor_r.calc_velocity(dt);
             motor_r.update_power(dt);
         },

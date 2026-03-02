@@ -152,7 +152,7 @@ auto begin() -> void {
             { // motor
                 LOG_INFO_START("Initializing Motor L & R");
                 if constexpr (initializing_list.Motor) {
-                    if (!motor_l.begin() && motor_r.begin())
+                    if (!motor_l.begin() || !motor_r.begin())
                         LOG_FAIL();
                     else {
                         LOG_DONE();
