@@ -18,6 +18,8 @@ bool Motor::begin() {
 
     m_vel_pid.reset();
 
+    LOG_INFO("attachInterruptParam(digitalPinToInterrupt({}), Motor::isr, CHANGE, this);", m_pin_enc_a);
+
     attachInterruptParam(digitalPinToInterrupt(m_pin_enc_a), Motor::isr, CHANGE, this);
 
     return true;
@@ -38,7 +40,11 @@ avel_t Motor::calc_velocity(dura_t dt) {
     constexpr float CPR_REV       = 1 / (GEAR_RATIO * RAW_CPR);
     constexpr float CONSTANT_PART = CPR_REV * TWO_PI;
 
-    m_ang_vel = delta * CONSTANT_PART / dt;
+    avel_t raw_vel = delta * CONSTANT_PART / dt;
+
+    constexpr float alpha = 0.3f;
+
+    m_ang_vel = alpha * raw_vel + (1.0f - alpha) * m_ang_vel;
 
     return m_ang_vel;
 }
