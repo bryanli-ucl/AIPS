@@ -96,9 +96,19 @@ void setup() {
         },
         "Process IIC");
 
+        scheduler.add(10000, []() {
+            oled1306.disp_text("hi");
+        }, "Display");
+
+        scheduler.add(100, [](){
+
+
+        },"LidarRead");
+
         scheduler.reset();
     }
 }
+
 
 void loop() {
     scheduler.tick(millis());

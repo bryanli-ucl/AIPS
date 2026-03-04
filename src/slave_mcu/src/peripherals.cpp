@@ -37,6 +37,18 @@ auto begin() -> void {
 
             LOG_DONE();
 
+            if constexpr (true) {
+                for (byte addr = 0x01; addr < 0x7F; addr++) {
+                    Wire.beginTransmission(addr);
+                    byte error = Wire.endTransmission();
+                    if (error == 0) {
+                        LOG_INFO("Found I2C device at 0x{h}", addr);
+                    } else {
+                        LOG_INFO("No I2C device at 0x{h}", addr);
+                    }
+                }
+            }
+
             { // MasterMCU
                 LOG_INFO_START("Initializing IIC Commu");
                 if constexpr (initializing_list.MasterBoard) {

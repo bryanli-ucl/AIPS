@@ -59,14 +59,14 @@ extern ModulinoBuzzer buzzer; // Buzzer
 
 struct {
 
-    bool SPI      = false;
-    bool OLED1362 = false;
+    bool SPI      = true;
+    bool OLED1362 = true;
 
     bool IIC         = true;
-    bool OLED1306    = false;
+    bool OLED1306    = true;
     bool MasterBoard = true;
 
-    bool LiDAR = false;
+    bool LiDAR = true;
     bool IR    = false;
     bool Servo = false;
 
