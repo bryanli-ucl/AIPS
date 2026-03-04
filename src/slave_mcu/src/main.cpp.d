@@ -77,6 +77,22 @@ void setup() {
         },
         "Print CPU Usage");
 
+        scheduler.add(2000, []() {
+        static bool done = false;
+        if (done) return;
+        done = true;
+
+        Wire.begin();
+        LOG_SECTION("I2C SCAN BEGIN");
+        for (uint8_t addr = 1; addr < 127; addr++) {
+        Wire.beginTransmission(addr);
+        if (Wire.endTransmission() == 0) {
+            LOG_INFO("I2C device found at 0x{:02X}", addr);
+            }
+        }
+    LOG_SECTION("I2C SCAN END");
+    }, "I2C Scan Once");
+
         scheduler.add(2500, []() { // Buzzer
             // buzzer.tone(440, 100);
         },

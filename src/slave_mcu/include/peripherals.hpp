@@ -4,6 +4,8 @@
 
 #include <Modulino.h>
 
+#include <TFLI2C.h>
+
 #include <SPI.h>
 #include <WiFiUdp.h>
 #include <Wire.h>
@@ -60,10 +62,10 @@ extern ModulinoBuzzer buzzer; // Buzzer
 struct {
 
     bool SPI      = true;
-    bool OLED1362 = true;
+    bool OLED1362 = false;
 
     bool IIC         = true;
-    bool OLED1306    = true;
+    bool OLED1306    = false;
     bool MasterBoard = true;
 
     bool LiDAR = true;

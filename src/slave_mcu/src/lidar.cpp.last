@@ -1,0 +1,29 @@
+#include <Arduino.h>
+#include <Wire.h>
+#include <TFLI2C.h>
+
+TFLI2C tfl;
+static const uint8_t TF_ADDR = 0x10;
+
+void setup() {
+  Serial.begin(115200);
+  delay(200);
+
+  Wire.begin();
+  Wire.setClock(400000);     // 先100k稳定后再改400k
+  Serial.println("TF-Luna I2C start");
+}
+
+void loop() {
+  int16_t dist = 0;
+
+  if (tfl.getData(dist, TF_ADDR)) {
+    Serial.print("dist_cm=");
+    Serial.println(dist);
+  } else {
+    Serial.print("TF read failed: ");
+    tfl.printStatus();
+  }
+
+  delay(50);
+}
