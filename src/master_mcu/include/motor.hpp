@@ -22,6 +22,7 @@ class Motor {
 
     avel_t calc_velocity(dura_t current_time);
     void update_power(dura_t current_time);
+    void update_power_force(float p);
 
     void reset() { m_vel_pid.reset(); }
     void set_target_avel(avel_t v) {
@@ -34,6 +35,7 @@ class Motor {
     avel_t get_avel() { return m_ang_vel; }
     int32_t get_count() { return m_count; }
     float get_power() { return m_power; }
+    void set_power(float p) { m_power = p; }
 
     private:
     static void isr(void*);

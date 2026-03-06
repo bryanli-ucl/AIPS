@@ -140,10 +140,10 @@ auto begin() -> void {
             // reinitializes and counts as an error.
             motoron.clearResetFlag(); // Bytes: 0xA9 0x00 0x04
 
-            motoron.setMaxAcceleration(1, 140);
-            motoron.setMaxDeceleration(1, 300);
-            motoron.setMaxAcceleration(2, 140);
-            motoron.setMaxDeceleration(2, 300);
+            motoron.setMaxAcceleration(1, 10000);
+            motoron.setMaxDeceleration(1, 10000);
+            motoron.setMaxAcceleration(2, 10000);
+            motoron.setMaxDeceleration(2, 10000);
 
             motoron.clearMotorFaultUnconditional();
 

@@ -57,6 +57,11 @@ void Motor::update_power(dura_t dt) {
     m_motoron.setSpeed(m_motor_num, m_power);
 }
 
+void Motor::update_power_force(float p) {
+    m_power = p;
+    m_motoron.setSpeed(m_motor_num, m_power);
+}
+
 void Motor::isr(void* raw_ins) {
 
     Motor* ins = reinterpret_cast<Motor*>(raw_ins);

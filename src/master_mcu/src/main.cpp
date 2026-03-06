@@ -38,13 +38,13 @@ auto setup() -> void {
         LOG_INFO("Pitch PID");
 
         pitch_pid.reset();
-        pitch_pid.set_paras({ 20.f, 2.f, 5.f });
+        pitch_pid.set_paras({55.f, 0.2f,0.2f });
         pitch_pid.set_target(0.0f);
 
         LOG_INFO("Motor Velocity PID");
         motor_l.reset();
         motor_l.set_paras({ 30.f, 20.f, 0.f });
-        motor_r.set_integral_limit(800.f);
+        motor_l.set_integral_limit(800.f);
         motor_l.set_target_avel(0rad_s);
 
         motor_r.reset();
@@ -54,7 +54,7 @@ auto setup() -> void {
 
         LOG_INFO("Yaw PID");
         yaw_pid.reset();
-        yaw_pid.set_paras({ 1.f, 0.f, 0.f });
+        yaw_pid.set_paras({ 10.f, 20.f, 0.f });
         yaw_pid.set_target(0);
 
         LOG_INFO("Bot Vel PID");
@@ -78,9 +78,9 @@ auto setup() -> void {
 
     { // Scheduler & Tasks
 
-        scheduler.add(200, []() { // Fall Check
+        scheduler.add(-1, []() { // Fall Check
             static constexpr dura_t dt        = 200ms;
-            constexpr auto FALL_THRESHOLD_RAD = 20 * RAD_TO_DEG;
+            constexpr auto FALL_THRESHOLD_RAD = 30 * DEG_TO_RAD;
             if (imu_ctrl.get_pitch_rad() > FALL_THRESHOLD_RAD) {
                 while (true) {
                     motoron.setAllSpeedsNow(0);
@@ -118,7 +118,7 @@ auto setup() -> void {
             // LOG_INFO("Left Motor Status: pwr:{}, avel:{}, pos:{}", motor_l.get_power(), motor_l.get_avel(), motor_l.get_count());
             // LOG_INFO("Right Motor Status: pwr:{}, avel:{}, pos:{}", motor_r.get_power(), motor_r.get_avel(), motor_r.get_count());
             // LOG_INFO("State: Roll{}, Pitch{}, Yaw{}", imu_ctrl.get_roll_deg(), imu_ctrl.get_pitch_deg(), imu_ctrl.get_yaw_deg());
-            LOG_INFO("{} {}", motor_r.get_avel(), motor_r.get_power());
+            LOG_INFO("{} {} {} {}", motor_r.get_avel(), motor_r.get_power(), motor_l.get_avel(), motor_l.get_power());
         },
         "Print Stats");
 
@@ -142,7 +142,7 @@ auto setup() -> void {
 
             // pitch pid
             float pitch_angle = imu_ctrl.get_pitch_rad();
-            float target_avel = pitch_pid.update(pitch_angle, dt);
+            float target_avel = pitch_pid.update(-pitch_angle, dt);
             LOG_TRACE("Target Vel: {}, pitch_angle: {}", target_avel, pitch_angle);
 
             // yaw pid
@@ -154,6 +154,9 @@ auto setup() -> void {
             // motor_l.set_target_avel(avel_t((target_avel - atanf(yaw_corr) * (1 / TWO_PI))));
             // motor_r.set_target_avel(-avel_t((target_avel + atanf(yaw_corr) * (1 / TWO_PI))));
 
+            motor_l.update_power_force(19*((target_avel - atanf(yaw_corr) * (1 / TWO_PI))));
+            motor_r.update_power_force(-42*((target_avel + atanf(yaw_corr) * (1 / TWO_PI))));
+
         },
         "Main PID");
 
@@ -161,13 +164,13 @@ auto setup() -> void {
             static constexpr dura_t dt = 50ms;
 
 
-            // motor_l.set_target_avel(-10rad_s);
-            motor_r.set_target_avel(15rad_s);
+            //motor_l.set_target_avel(15rad_s);
+            //motor_r.set_target_avel(-15rad_s);
 
-            // motor_l.calc_velocity(dt);
+            motor_l.calc_velocity(dt);
             // motor_l.update_power(dt);
             motor_r.calc_velocity(dt);
-            motor_r.update_power(dt);
+            // motor_r.update_power(dt);
         },
         "Update Motor");
 
