@@ -13,6 +13,7 @@ MotoronI2C motoron{ iic_addrs::Motoron }; // IIC1
 
 Motor motor_l{ ENCODERL_A, ENCODERL_B, MOTOR_L_NUM, motoron }; // interrupt
 Motor motor_r{ ENCODERR_A, ENCODERR_B, MOTOR_R_NUM, motoron }; // interrupt
+WifiCommu udp_comm{ NETWORK_SSID, NETWORK_PASSWORD, NETWORK_UDP_PORT };
 
 master_to_slave_iic_data_t master_data;
 slave_to_master_iic_data_t slave_data;
@@ -162,6 +163,17 @@ auto begin() -> void {
                     LOG_SKIP();
             }
 
+        } else
+            LOG_SKIP();
+    }
+
+    { // Wifi
+        LOG_INFO_START("Initializing WiFi");
+        if constexpr (initializing_list.WiFi) {
+            if (udp_comm.begin() != 0)
+                LOG_FAIL();
+            else
+                LOG_DONE();
         } else
             LOG_SKIP();
     }

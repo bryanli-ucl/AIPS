@@ -36,6 +36,9 @@ class Motor {
     int32_t get_count() { return m_count; }
     float get_power() { return m_power; }
     void set_power(float p) { m_power = p; }
+    void set_power_constrain(float lim) {
+        m_power_constrain = lim;
+    }
 
     private:
     static void isr(void*);
@@ -55,4 +58,5 @@ class Motor {
 
     int16_t m_power;
     avel_t m_ang_vel;
+    float m_power_constrain;
 };

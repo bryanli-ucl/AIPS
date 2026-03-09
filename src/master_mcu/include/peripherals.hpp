@@ -10,7 +10,9 @@
 
 #include "common.hpp"
 #include "motor.hpp"
+#include "network_pwd.hpp"
 #include "serial_logger.hpp"
+#include "udp_commu.hpp"
 
 namespace peripherals {
 
@@ -49,6 +51,7 @@ extern MotoronI2C motoron; // IIC1
 
 extern Motor motor_l; // interrupt
 extern Motor motor_r; // interrupt
+extern WifiCommu udp_comm;
 
 
 extern master_to_slave_iic_data_t master_data;
@@ -65,6 +68,7 @@ struct {
     bool IIC      = true;
     bool Motor    = true;
     bool Motoron  = true;
+    bool WiFi     = true;
 
 } constexpr initializing_list;
 

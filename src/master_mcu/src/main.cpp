@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include <cstring>
 
 #include "imu_controller.hpp"
 #include "literals.hpp"
@@ -13,6 +14,7 @@ PID_Controller pitch_pid;
 PID_Controller yaw_pid;
 PID_Controller bot_vel_pid;
 TaskScheduler scheduler;
+float g_pitch_target_rad = 0.12f;
 
 auto setup() -> void {
 
@@ -38,20 +40,22 @@ auto setup() -> void {
         LOG_INFO("Pitch PID");
 
         pitch_pid.reset();
-        pitch_pid.set_paras({ 55.f, 0.01f, 0.0f });
-        pitch_pid.set_target(-0.12f);
-        pitch_pid.set_integral_limit(30);
+        pitch_pid.set_paras({ 55.f, 0.0f, 0.0f });
+        pitch_pid.set_target(g_pitch_target_rad);
+        pitch_pid.set_integral_limit(300);
 
         LOG_INFO("Motor Velocity PID");
         motor_l.reset();
         motor_l.set_paras({ 30.f, 20.f, 0.f });
         motor_l.set_integral_limit(200.f);
         motor_l.set_target_avel(0rad_s);
+        motor_l.set_power_constrain(400);
 
         motor_r.reset();
-        motor_r.set_paras({ 60.f, 20.f, 0.f });
+        motor_r.set_paras({ 30.f, 20.f, 0.f });
         motor_r.set_integral_limit(200.f);
         motor_r.set_target_avel(0rad_s);
+        motor_r.set_power_constrain(400);
 
         LOG_INFO("Yaw PID");
         yaw_pid.reset();
@@ -123,6 +127,71 @@ auto setup() -> void {
         },
         "Print Stats");
 
+        scheduler.add(20, []() { // Process UDP for Pitch PID tuning
+            static uint8_t buf[128] = {};
+
+            const int pack_len = udp.parsePacket();
+            if (pack_len <= 0) return;
+
+            const int len = udp.read(buf, sizeof(buf) - 1);
+            if (len <= 0) return;
+
+            float target = g_pitch_target_rad;
+            float kp, ki, kd;
+            std::tie(kp, ki, kd) = pitch_pid.get_paras();
+
+            bool parsed = false;
+
+            if (len == static_cast<int>(sizeof(float) * 4)) {
+                float vals[4];
+                memcpy(vals, buf, sizeof(vals));
+                target = vals[0];
+                kp     = vals[1];
+                ki     = vals[2];
+                kd     = vals[3];
+                parsed = true;
+            } else {
+                buf[len]       = '\0';
+                float p_target = 0.f, p = 0.f, i = 0.f, d = 0.f;
+                if (sscanf(reinterpret_cast<const char*>(buf), "PITCH %f %f %f %f", &p_target, &p, &i, &d) == 4) {
+                    target = p_target;
+                    kp     = p;
+                    ki     = i;
+                    kd     = d;
+                    parsed = true;
+                } else if (sscanf(reinterpret_cast<const char*>(buf), "TARGET %f", &p_target) == 1) {
+                    target = p_target;
+                    parsed = true;
+                } else if (sscanf(reinterpret_cast<const char*>(buf), "PARAS %f %f %f", &p, &i, &d) == 3) {
+                    kp     = p;
+                    ki     = i;
+                    kd     = d;
+                    parsed = true;
+                }
+            }
+
+            if (!parsed) {
+                LOG_WARN("Unknown UDP payload format, len={}, {}", len, reinterpret_cast<const char*>(buf));
+                return;
+            }
+
+            g_pitch_target_rad = target;
+            pitch_pid.set_paras({ kp, ki, kd });
+            pitch_pid.set_target(g_pitch_target_rad);
+            pitch_pid.reset();
+
+            LOG_INFO("Pitch PID updated by UDP: target={}, kp={}, ki={}, kd={}",
+            g_pitch_target_rad, kp, ki, kd);
+
+            char ack[96];
+            snprintf(ack, sizeof(ack), "OK target=%.5f kp=%.5f ki=%.5f kd=%.5f\n",
+            g_pitch_target_rad, kp, ki, kd);
+            udp.beginPacket(udp.remoteIP(), udp.remotePort());
+            udp.write(reinterpret_cast<const uint8_t*>(ack), strlen(ack));
+            udp.endPacket();
+        },
+        "Process UDP Pitch PID");
+
         scheduler.add(20, []() { // Update IMU
             static constexpr dura_t dt = 20ms;
             imu_ctrl.update(dt);
@@ -138,7 +207,7 @@ auto setup() -> void {
 
             float target_pitch = bot_vel_pid.update(bot_vel, dt);
             target_pitch       = constrain(target_pitch, -5 * DEG_TO_RAD, 5 * DEG_TO_RAD);
-            target_pitch       = 0;
+            target_pitch       = g_pitch_target_rad;
             pitch_pid.set_target(target_pitch);
 
             // pitch pid
@@ -155,8 +224,8 @@ auto setup() -> void {
             // motor_l.set_target_avel(-avel_t((target_avel - atanf(yaw_corr) * (1 / TWO_PI))));
             // motor_r.set_target_avel(-avel_t((target_avel + atanf(yaw_corr) * (1 / TWO_PI))));
 
-            motor_l.update_power_force(-10*((target_avel - atanf(yaw_corr) * (1 / TWO_PI))));
-            motor_r.update_power_force(-10*((target_avel + atanf(yaw_corr) * (1 / TWO_PI))));
+            motor_l.update_power_force(-10 * ((target_avel - atanf(yaw_corr) * (1 / TWO_PI))));
+            motor_r.update_power_force(-10 * ((target_avel + atanf(yaw_corr) * (1 / TWO_PI))));
 
         },
         "Main PID");

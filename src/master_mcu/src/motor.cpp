@@ -54,6 +54,8 @@ void Motor::update_power(dura_t dt) {
     m_power = static_cast<int16_t>(m_vel_pid.update(m_ang_vel.v, dt));
     LOG_TRACE("POWER{}: {}, {}, {}", m_motor_num, m_power, m_ang_vel, m_target_avel);
 
+    m_power = constrain(m_power, -m_power_constrain, m_power_constrain);
+
     m_motoron.setSpeed(m_motor_num, m_power);
 }
 
