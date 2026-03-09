@@ -14,7 +14,7 @@ PID_Controller pitch_pid;
 PID_Controller yaw_pid;
 PID_Controller bot_vel_pid;
 TaskScheduler scheduler;
-float g_pitch_target_rad = 0.12f;
+float g_pitch_target_rad = 0.11f;
 
 auto setup() -> void {
 
@@ -40,7 +40,7 @@ auto setup() -> void {
         LOG_INFO("Pitch PID");
 
         pitch_pid.reset();
-        pitch_pid.set_paras({ 55.f, 0.0f, 0.0f });
+        pitch_pid.set_paras({ 100.f, 300.0f, 7.5f });
         pitch_pid.set_target(g_pitch_target_rad);
         pitch_pid.set_integral_limit(300);
 
