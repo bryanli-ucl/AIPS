@@ -38,18 +38,19 @@ auto setup() -> void {
         LOG_INFO("Pitch PID");
 
         pitch_pid.reset();
-        pitch_pid.set_paras({55.f, 0.2f,0.2f });
-        pitch_pid.set_target(0.0f);
+        pitch_pid.set_paras({ 55.f, 0.01f, 0.0f });
+        pitch_pid.set_target(-0.12f);
+        pitch_pid.set_integral_limit(30);
 
         LOG_INFO("Motor Velocity PID");
         motor_l.reset();
         motor_l.set_paras({ 30.f, 20.f, 0.f });
-        motor_l.set_integral_limit(800.f);
+        motor_l.set_integral_limit(200.f);
         motor_l.set_target_avel(0rad_s);
 
         motor_r.reset();
-        motor_r.set_paras({ 30.f, 20.f, 0.f });
-        motor_r.set_integral_limit(800.f);
+        motor_r.set_paras({ 60.f, 20.f, 0.f });
+        motor_r.set_integral_limit(200.f);
         motor_r.set_target_avel(0rad_s);
 
         LOG_INFO("Yaw PID");
@@ -118,19 +119,19 @@ auto setup() -> void {
             // LOG_INFO("Left Motor Status: pwr:{}, avel:{}, pos:{}", motor_l.get_power(), motor_l.get_avel(), motor_l.get_count());
             // LOG_INFO("Right Motor Status: pwr:{}, avel:{}, pos:{}", motor_r.get_power(), motor_r.get_avel(), motor_r.get_count());
             // LOG_INFO("State: Roll{}, Pitch{}, Yaw{}", imu_ctrl.get_roll_deg(), imu_ctrl.get_pitch_deg(), imu_ctrl.get_yaw_deg());
-            LOG_INFO("{} {} {} {}", motor_r.get_avel(), motor_r.get_power(), motor_l.get_avel(), motor_l.get_power());
+            LOG_INFO("{} {} {} {} {}", motor_r.get_avel(), motor_r.get_power(), motor_l.get_avel(), motor_l.get_power(), imu_ctrl.get_pitch_deg());
         },
         "Print Stats");
 
-        scheduler.add(5, []() { // Update IMU
-            static constexpr dura_t dt = 5ms;
+        scheduler.add(20, []() { // Update IMU
+            static constexpr dura_t dt = 20ms;
             imu_ctrl.update(dt);
         },
         "Update IMU");
 
 
-        scheduler.add(5, []() { // Main PID Controller
-            static constexpr dura_t dt = 5ms;
+        scheduler.add(20, []() { // Main PID Controller
+            static constexpr dura_t dt = 20ms;
 
             // bot vel pid
             float bot_vel = (motor_r.get_avel().v - motor_l.get_avel().v) * 0.5f;
@@ -151,26 +152,25 @@ auto setup() -> void {
 
             // mix velocity and rotation
             yaw_corr = 0;
-            // motor_l.set_target_avel(avel_t((target_avel - atanf(yaw_corr) * (1 / TWO_PI))));
+            // motor_l.set_target_avel(-avel_t((target_avel - atanf(yaw_corr) * (1 / TWO_PI))));
             // motor_r.set_target_avel(-avel_t((target_avel + atanf(yaw_corr) * (1 / TWO_PI))));
 
-            motor_l.update_power_force(19*((target_avel - atanf(yaw_corr) * (1 / TWO_PI))));
-            motor_r.update_power_force(-42*((target_avel + atanf(yaw_corr) * (1 / TWO_PI))));
+            motor_l.update_power_force(-10*((target_avel - atanf(yaw_corr) * (1 / TWO_PI))));
+            motor_r.update_power_force(-10*((target_avel + atanf(yaw_corr) * (1 / TWO_PI))));
 
         },
         "Main PID");
 
-        scheduler.add(50, []() { // update motor velocity pid
-            static constexpr dura_t dt = 50ms;
+        scheduler.add(-1, []() { // update motor velocity pid
+            static constexpr dura_t dt = 20ms;
 
-
-            //motor_l.set_target_avel(15rad_s);
-            //motor_r.set_target_avel(-15rad_s);
+            // motor_l.set_target_avel(15rad_s);
+            // motor_r.set_target_avel(-15rad_s);
 
             motor_l.calc_velocity(dt);
-            // motor_l.update_power(dt);
+            motor_l.update_power(dt);
             motor_r.calc_velocity(dt);
-            // motor_r.update_power(dt);
+            motor_r.update_power(dt);
         },
         "Update Motor");
 
