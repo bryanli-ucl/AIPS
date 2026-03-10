@@ -10,6 +10,8 @@ dev_oled1306 oled1306{};                                                // IIC
 WifiCommu udp_comm{ NETWORK_SSID, NETWORK_PASSWORD, NETWORK_UDP_PORT }; // WiFi
 QTRSensors qtr{};                                                       // IR Sensors
 ModulinoBuzzer buzzer{};                                                // Buzzer
+TFLI2C tfl{};                                                           // TFL LiDAR
+Servo servo{};                                                          // Servo
 
 auto begin() -> void {
 
@@ -32,7 +34,8 @@ auto begin() -> void {
             pinMode(SDA, INPUT_PULLUP);
             delay(10);
 
-            Wire.begin(iic_addrs::SlaveMCU);
+            Wire.begin();
+            Wire.setClock(400000); // 400kHz
             delay(300);
 
             LOG_DONE();
@@ -48,18 +51,30 @@ auto begin() -> void {
                     }
                 }
             }
-
-            { // MasterMCU
-                LOG_INFO_START("Initializing IIC Commu");
-                if constexpr (initializing_list.MasterBoard) {
-                    iic_commu::begin();
-                    LOG_DONE();
-                } else
-                    LOG_SKIP();
-            }
-
         } else
             LOG_SKIP();
+    }
+
+    { // MasterMCU
+        LOG_INFO_START("Initializing IIC Commu");
+        if constexpr (initializing_list.MasterBoard) {
+            iic_commu::begin();
+            LOG_DONE();
+        } else
+            LOG_SKIP();
+    }
+
+    { // LiDAR
+        LOG_INFO_START("Initializing LiDAR");
+        if constexpr (initializing_list.LiDAR && initializing_list.IIC) {
+            if (tfl.Soft_Reset(iic_addrs::LiDAR)) {
+                LOG_DONE();
+            } else {
+                LOG_FAIL();
+            }
+        } else {
+            LOG_SKIP();
+        }
     }
 
     { // oled1362
@@ -82,6 +97,28 @@ auto begin() -> void {
                 LOG_FAIL();
             else {
                 oled1306.enable();
+
+                constexpr int16_t HEIGHT = 64;
+                constexpr int16_t WIDTH  = 128;
+                auto& disp               = oled1306.get_disp();
+
+                disp.clearDisplay();
+
+                const auto p2xy = [](int16_t r, int16_t t) -> std::tuple<int16_t, int16_t> {
+                    return { (float)r * sinf((float)t * DEG_TO_RAD), (float)r * cosf((float)t * DEG_TO_RAD) };
+                };
+
+                for (const auto& r : { 15, 30, 45, 60 }) {
+                    disp.drawCircle(WIDTH / 2, HEIGHT, r, SSD1306_WHITE);
+                }
+
+                for (const auto& t : { -45, 0, 45 }) {
+                    auto [x, y] = p2xy(60, t);
+                    disp.drawLine(WIDTH / 2, HEIGHT, WIDTH / 2 + x, HEIGHT - y, SSD1306_WHITE);
+                }
+
+                disp.display();
+
                 LOG_DONE();
             }
         } else
@@ -145,6 +182,20 @@ auto begin() -> void {
             for (uint8_t i = 0; i < IR_CONUT; i++)
                 LOG_DEBUG("     qtr.calibrationOn.maximum[{}]: ", i, qtr.calibrationOn.maximum[i]);
 
+        } else
+            LOG_SKIP();
+    }
+
+    { // Servo
+        LOG_INFO_START("Initializing Servo");
+
+        if constexpr (initializing_list.Servo) {
+            if (servo.attach(SERVO_PIN) != INVALID_SERVO) {
+                LOG_DONE();
+                servo.write(90);
+            } else {
+                LOG_FAIL();
+            }
         } else
             LOG_SKIP();
     }

@@ -8,10 +8,11 @@
 
 #include <SPI.h>
 #include <WiFiUdp.h>
-#include <Wire.h>
 
 #include <WiFiS3.h>
 #include <Wire.h>
+
+#include <Servo.h>
 
 #include <QTRSensors.h>
 
@@ -58,24 +59,26 @@ extern dev_oled1306 oled1306; // IIC
 extern WifiCommu udp_comm;    // WiFi
 extern QTRSensors qtr;        // IR Sensors
 extern ModulinoBuzzer buzzer; // Buzzer
+extern TFLI2C tfl;            // TFL LiDAR
+extern Servo servo;           // Servo
 
 struct {
 
     bool SPI      = true;
-    bool OLED1362 = false;
+    bool OLED1362 = true;
 
     bool IIC         = true;
-    bool OLED1306    = false;
+    bool OLED1306    = true;
     bool MasterBoard = true;
 
     bool LiDAR = true;
     bool IR    = false;
-    bool Servo = false;
+    bool Servo = true;
 
     bool Modulino = true;
     bool Buzzer   = true;
 
-    bool WiFi = true;
+    bool WiFi = false;
 
 } constexpr initializing_list;
 

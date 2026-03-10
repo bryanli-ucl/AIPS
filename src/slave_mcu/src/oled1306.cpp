@@ -21,6 +21,7 @@ bool dev_oled1306::begin() {
     if (m_initialized) {
         m_is_enable = true;
         clear();
+        m_display.drawFastHLine(0, 64, 4, SSD1306_WHITE);
         m_display.display();
     }
 

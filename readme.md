@@ -106,11 +106,12 @@ QTRX-HD-09RC Reflectance Sensor Array: 9-Channel, 4mm Pitch, RC Output, Low Curr
 
 ### LiDAR 
 TF-Luna LiDAR
-| PIN No. | Symbol | Function     | Connect to |
-| ------- | ------ | ------------ | ---------- |
-| 1       | +5V    | Power Supply | 5V         |
-| 2       | SDA    | IIC Data     | SA4 / SSDA |
-| 3       | SCL    | IIC Clock    | SA5 / SSCL |
-| 4       | GND    | gound        | GND        |
-| 5       | None   | None         | None       |
-| 6       | None   | None         | None       |
+| PIN No. | Color  | Symbol | Function     | Connect to |
+| ------- | ------ | ------ | ------------ | ---------- |
+| 1       | White  | +5V    | Power Supply | 5V         |
+| 2       | Blue   | SDA    | IIC Data     | SA4 / SSDA |
+| 3       | Green  | SCL    | IIC Clock    | SA5 / SSCL |
+| 4       | Yellow | GND    | gound        | GND        |
+| 5       | Black  | None   | None         | None       |
+| 6       | Red    | None   | None         | None       |
+ 
