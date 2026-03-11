@@ -118,7 +118,7 @@ auto setup() -> void {
         },
         "Print CPU Usage");
 
-        scheduler.add(100, []() { // Print Stats
+        scheduler.add(500, []() { // Print Stats
             static constexpr dura_t dt = 300ms;
             // LOG_INFO("Left Motor Status: pwr:{}, avel:{}, pos:{}", motor_l.get_power(), motor_l.get_avel(), motor_l.get_count());
             // LOG_INFO("Right Motor Status: pwr:{}, avel:{}, pos:{}", motor_r.get_power(), motor_r.get_avel(), motor_r.get_count());
@@ -127,7 +127,7 @@ auto setup() -> void {
         },
         "Print Stats");
 
-        scheduler.add(20, []() { // Process UDP for Pitch PID tuning
+        scheduler.add(200, []() { // Process UDP for Pitch PID tuning
             static uint8_t buf[128] = {};
 
             const int pack_len = udp.parsePacket();
@@ -150,24 +150,6 @@ auto setup() -> void {
                 ki     = vals[2];
                 kd     = vals[3];
                 parsed = true;
-            } else {
-                buf[len]       = '\0';
-                float p_target = 0.f, p = 0.f, i = 0.f, d = 0.f;
-                if (sscanf(reinterpret_cast<const char*>(buf), "PITCH %f %f %f %f", &p_target, &p, &i, &d) == 4) {
-                    target = p_target;
-                    kp     = p;
-                    ki     = i;
-                    kd     = d;
-                    parsed = true;
-                } else if (sscanf(reinterpret_cast<const char*>(buf), "TARGET %f", &p_target) == 1) {
-                    target = p_target;
-                    parsed = true;
-                } else if (sscanf(reinterpret_cast<const char*>(buf), "PARAS %f %f %f", &p, &i, &d) == 3) {
-                    kp     = p;
-                    ki     = i;
-                    kd     = d;
-                    parsed = true;
-                }
             }
 
             if (!parsed) {
@@ -192,14 +174,13 @@ auto setup() -> void {
         },
         "Process UDP Pitch PID");
 
-        scheduler.add(20, []() { // Update IMU
+        scheduler.add(7, []() { // Update IMU
             static constexpr dura_t dt = 20ms;
             imu_ctrl.update(dt);
         },
         "Update IMU");
 
-
-        scheduler.add(20, []() { // Main PID Controller
+        scheduler.add(5, []() { // Main PID Controller
             static constexpr dura_t dt = 20ms;
 
             // bot vel pid
@@ -221,16 +202,16 @@ auto setup() -> void {
 
             // mix velocity and rotation
             yaw_corr = 0;
-            // motor_l.set_target_avel(-avel_t((target_avel - atanf(yaw_corr) * (1 / TWO_PI))));
-            // motor_r.set_target_avel(-avel_t((target_avel + atanf(yaw_corr) * (1 / TWO_PI))));
+            motor_l.set_target_avel(-avel_t((target_avel - atanf(yaw_corr) * (1 / TWO_PI))));
+            motor_r.set_target_avel(-avel_t((target_avel + atanf(yaw_corr) * (1 / TWO_PI))));
 
-            motor_l.update_power_force(-10 * ((target_avel - atanf(yaw_corr) * (1 / TWO_PI))));
-            motor_r.update_power_force(-10 * ((target_avel + atanf(yaw_corr) * (1 / TWO_PI))));
+            // motor_l.update_power_force(-10 * ((target_avel - atanf(yaw_corr) * (1 / TWO_PI))));
+            // motor_r.update_power_force(-10 * ((target_avel + atanf(yaw_corr) * (1 / TWO_PI))));
 
         },
         "Main PID");
 
-        scheduler.add(-1, []() { // update motor velocity pid
+        scheduler.add(5, []() { // update motor velocity pid
             static constexpr dura_t dt = 20ms;
 
             // motor_l.set_target_avel(15rad_s);

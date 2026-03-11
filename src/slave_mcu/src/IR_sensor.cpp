@@ -1,89 +1,64 @@
 #include <Arduino.h>
+#include <QTRSensors.h>
 
-const int irPins[9] = {2, 3, 4, 5, 7, A0, A1, A2, A3};
+QTRSensors qtr;
 
-// true = 黑线白底
-// false = 白线黑底
-const bool LINE_IS_BLACK = true;
-
-// true = 传感器检测到目标时输出 0
-// false = 传感器检测到目标时输出 1
-const bool SENSOR_ACTIVE_LOW = true;
-
-// 从左到右的权重
-const int weights[9] = {-4, -3, -2, -1, 0, 1, 2, 3, 4};
-
-int sensorState[9];
-int lastError = 0;
-
-void readSensors() {
-    for (int i = 0; i < 9; i++) {
-        int raw = digitalRead(irPins[i]);
-
-        // 先统一成“检测到反射目标/有效触发”为 1
-        int detected = SENSOR_ACTIVE_LOW ? !raw : raw;
-
-        // 如果是黑线白底，则“黑线”应该算触发
-        // 如果是白线黑底，则反过来
-        sensorState[i] = LINE_IS_BLACK ? detected : !detected;
-    }
-}
-
-int calculateError() {
-    long weightedSum = 0;
-    int count = 0;
-
-    for (int i = 0; i < 9; i++) {
-        if (sensorState[i]) {
-            weightedSum += weights[i];
-            count++;
-        }
-    }
-
-    // 一条线都没看到
-    if (count == 0) {
-        return lastError;
-    }
-
-    int error = weightedSum / count;
-    lastError = error;
-    return error;
-}
-
-void printSensors() {
-    for (int i = 0; i < 9; i++) {
-        Serial.print(sensorState[i]);
-        Serial.print(" ");
-    }
-}
+const uint8_t SensorCount = 9;
+uint16_t sensorValues[SensorCount];
 
 void setup() {
-    Serial.begin(115200);
+    // configure the sensors
+    qtr.setTypeRC();
+    qtr.setSensorPins((const uint8_t[]){ 2, 3, 4, 5, 7, A0, A1, A2, A3 }, SensorCount);
+    qtr.setEmitterPins(2, 3);
 
-    for (int i = 0; i < 9; i++) {
-        pinMode(irPins[i], INPUT);
+    delay(500);
+    pinMode(LED_BUILTIN, OUTPUT);
+    digitalWrite(LED_BUILTIN, HIGH); // turn on Arduino's LED to indicate we are in calibration mode
+
+    // 2.5 ms RC read timeout (default) * 10 reads per calibrate() call
+    // = ~25 ms per calibrate() call.
+    // Call calibrate() 400 times to make calibration take about 10 seconds.
+    for (uint16_t i = 0; i < 40; i++) {
+        qtr.calibrate();
     }
+    digitalWrite(LED_BUILTIN, LOW); // turn off Arduino's LED to indicate we are through with calibration
+
+    // print the calibration minimum values measured when emitters were on
+    Serial.begin(115200);
+    for (uint8_t i = 0; i < SensorCount; i++) {
+        Serial.print(qtr.calibrationOn.minimum[i]);
+        Serial.print(' ');
+    }
+    Serial.println();
+
+    // print the calibration maximum values measured when emitters were on
+    for (uint8_t i = 0; i < SensorCount; i++) {
+        Serial.print(qtr.calibrationOn.maximum[i]);
+        Serial.print(' ');
+    }
+    Serial.println();
+    Serial.println();
+
+    qtr.setTimeout(9999);
+
+    delay(1000);
 }
 
-// 这里先不接电机，只输出循迹方向判断
 void loop() {
-    readSensors();
-    int error = calculateError();
+    // read calibrated sensor values and obtain a measure of the line position
+    // from 0 to 5000 (for a white line, use readLineWhite() instead)
+    // uint16_t position = qtr.readLineBlack(sensorValues);
+    qtr.read(sensorValues);
 
-    printSensors();
-    Serial.print(" | error = ");
-    Serial.print(error);
-    Serial.print(" | ");
+    // print the sensor values as numbers from 0 to 1000, where 0 means maximum
+    // reflectance and 1000 means minimum reflectance, followed by the line
+    // position
+    for (uint8_t i = 0; i < SensorCount; i++) {
+        Serial.print(sensorValues[i]);
+        Serial.print('\t');
+    }
+    Seri
 
-    if (error == 0) {
-        Serial.println("forward");
-    }
-    else if (error < 0) {
-        Serial.println("turn left");
-    }
-    else {
-        Serial.println("turn right");
-    }
-
-    delay(100);
+    delay(250);
 }
