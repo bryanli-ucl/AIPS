@@ -10,7 +10,11 @@ Motor::Motor(uint8_t enc_a, uint8_t enc_b, uint8_t motor_num, MotoronI2C& motoro
   m_vel_pid(),
   m_motoron(motoron),
   m_ang_vel(0rad_s),
-  m_power(0) {}
+  m_deadzone(0),
+  m_power(0),
+  m_power_constrain(400) {
+    m_vel_pid.reset();
+}
 
 bool Motor::begin() {
     pinMode(m_pin_enc_a, INPUT_PULLDOWN);
@@ -56,7 +60,12 @@ void Motor::update_power(dura_t dt) {
 
     m_power = constrain(m_power, -m_power_constrain, m_power_constrain);
 
-    m_motoron.setSpeed(m_motor_num, m_power);
+    if (m_power < -5)
+        m_power -= m_deadzone;
+    if (m_power > 5)
+        m_power += m_deadzone;
+
+    m_motoron.setSpeedNow(m_motor_num, m_power);
 }
 
 void Motor::update_power_force(float p) {
