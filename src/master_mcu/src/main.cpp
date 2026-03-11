@@ -26,7 +26,7 @@ auto setup() -> void {
     { // board info
         LOG_SECTION("ARDUINO UNO R4 WIFI MASTER BOARS");
         LOG_INFO("sizeof(master_data): {}", sizeof(master_data));
-        LOG_INFO("sizeof(slave_data): {}", sizeof(slave_data));
+        LOG_INFO("sizeof(slave2master_data): {}", sizeof(slave2master_data));
     }
 
     { // init peripherals
@@ -99,19 +99,39 @@ auto setup() -> void {
         },
         "Fall Check");
 
-        scheduler.add(-1, []() { // Board Communication
-            static constexpr dura_t dt = 200ms;
+        scheduler.add(80, []() { // Board Communication
+            static constexpr dura_t dt = 80ms;
 
-            master_data.value1      = 1;
-            master_data.value2      = -2;
-            master_data.value3      = dt.v;
-            master_data.is_new_data = true;
-            Wire.beginTransmission(static_cast<uint8_t>(iic_addrs::SlaveMCU));
-            Wire.write((uint8_t*)&master_data, sizeof(master_data));
-            auto error = Wire.endTransmission();
+            // master_data.value1      = 1;
+            // master_data.value2      = -2;
+            // master_data.value3      = dt.v;
+            // master_data.is_new_data = true;
+            // Wire.beginTransmission(static_cast<uint8_t>(iic_addrs::SlaveMCU));
+            // Wire.write((uint8_t*)&master_data, sizeof(master_data));
+            // auto error = Wire.endTransmission();
 
-            if (error != 0)
-                LOG_DEBUG("Transmission Error: {}", error);
+            // if (error != 0)
+            //     LOG_DEBUG("Transmission Error: {}", error);
+
+            static slave_to_master_iic_data_t data{};
+
+            int len = Wire1.requestFrom(iic_addrs::SlaveMCU, sizeof(data));
+
+            if (len != sizeof(data)) {
+                while (Wire1.available()) Wire1.read();
+                return;
+            }
+
+            {
+                uint8_t* ptr = reinterpret_cast<uint8_t*>(&data);
+                while (Wire1.available()) {
+                    *ptr = Wire1.read();
+                    ptr++;
+                }
+            }
+
+            LOG_INFO("From Slave: bot vel: {}, yaw vel: {}", data.target_vel, data.target_yaw);
+
         },
         "Board Communication");
 
@@ -126,6 +146,7 @@ auto setup() -> void {
             // LOG_INFO("Right Motor Status: pwr:{}, avel:{}, pos:{}", motor_r.get_power(), motor_r.get_avel(), motor_r.get_count());
             // LOG_INFO("State: Roll{}, Pitch{}, Yaw{}", imu_ctrl.get_roll_deg(), imu_ctrl.get_pitch_deg(), imu_ctrl.get_yaw_deg());
             LOG_INFO("{} {} {} {} {}", motor_r.get_avel(), motor_r.get_power(), motor_l.get_avel(), motor_l.get_power(), imu_ctrl.get_pitch_deg());
+            LOG_INFO("Knob: {}", knob.get());
         },
         "Print Stats");
 
@@ -216,8 +237,8 @@ auto setup() -> void {
         scheduler.add(5, []() { // update motor velocity pid
             static constexpr dura_t dt = 20ms;
 
-            //motor_l.set_target_avel(5rad_s);
-            //motor_r.set_target_avel(-5rad_s);
+            // motor_l.set_target_avel(5rad_s);
+            // motor_r.set_target_avel(-5rad_s);
 
             motor_l.calc_velocity(dt);
             motor_l.update_power(dt);

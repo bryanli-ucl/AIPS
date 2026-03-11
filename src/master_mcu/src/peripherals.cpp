@@ -24,8 +24,6 @@ auto begin() -> void {
         LOG_INFO_START("Initializing Modulino");
         if constexpr (initializing_list.Modulino) {
             Modulino.begin();
-            Wire1.setClock(400'000); // 400kHZ
-            delay(100);              // essential
             LOG_DONE();
 
             { // buttons
@@ -41,7 +39,7 @@ auto begin() -> void {
 
             { // imu
                 LOG_INFO_START("Initializing ModulinoIMU");
-                if constexpr (initializing_list.IMU) {
+                if constexpr (initializing_list.Movement) {
                     if (!imu.begin())
                         LOG_FAIL();
                     else
@@ -88,7 +86,35 @@ auto begin() -> void {
     }
 
     { // IIC1
-        LOG_INFO_START("Initializing IIC1");
+        LOG_INFO("Initializing Boards Communication");
+        if constexpr (initializing_list.Slave) {
+
+            Wire1.begin();
+            Wire1.setClock(100'000); // 100kHz
+
+            // scanning iic1 address
+            if constexpr (true) {
+                for (uint8_t addr = 0x01; addr <= 0x7F; addr++) {
+                    Wire1.beginTransmission(addr);
+                    uint8_t error = Wire1.endTransmission();
+                    if (error == 0) {
+                        LOG_INFO("Found I2C1 device at 0x{h}", addr);
+                    } else {
+                        LOG_INFO("No I2C1 device at 0x{h}, err = {}", addr, error);
+                    }
+                }
+            }
+            // SlaveMCU
+            if (Wire1.beginTransmission(static_cast<uint8_t>(iic_addrs::SlaveMCU)), Wire1.endTransmission() == 0)
+                LOG_INFO("SlaveMCU Connnected");
+            else
+                LOG_WARN("SlaveMCU Unconnnected");
+        } else
+            LOG_INFO("Boards Communication Unabled!");
+    }
+
+    { // IIC
+        LOG_INFO_START("Initializing IIC");
         if constexpr (initializing_list.IIC) {
             // iic pinmode (pullup resistor)
             pinMode(SCL, INPUT_PULLUP);
@@ -108,7 +134,7 @@ auto begin() -> void {
                     if (error == 0) {
                         LOG_INFO("Found I2C device at 0x{h}", addr);
                     } else {
-                        LOG_INFO("No I2C device at 0x{h}", addr);
+                        LOG_TRACE("No I2C device at 0x{h}", addr);
                     }
                 }
             }
@@ -118,12 +144,6 @@ auto begin() -> void {
                 LOG_INFO("Motoron Connnected");
             else
                 LOG_WARN("Motoron Unconnnected");
-
-            // SlaveMCU
-            if (Wire.beginTransmission(static_cast<uint8_t>(iic_addrs::SlaveMCU)), Wire.endTransmission() == 0)
-                LOG_INFO("SlaveMCU Connnected");
-            else
-                LOG_WARN("SlaveMCU Unconnnected");
 
         } else
             LOG_SKIP();
@@ -168,14 +188,13 @@ auto begin() -> void {
     }
 
     { // Wifi
-        LOG_INFO_START("Initializing WiFi");
+        LOG_INFO("Initializing WiFi");
         if constexpr (initializing_list.WiFi) {
             if (udp_comm.begin() != 0)
-                LOG_FAIL();
+                LOG_WARN("WiFi fail to init");
             else
-                LOG_DONE();
-        } else
-            LOG_SKIP();
+                LOG_WARN("WiFi init success");
+        }
     }
 
     // finished

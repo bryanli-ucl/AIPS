@@ -44,8 +44,6 @@ class TaskScheduler {
     void print_cpu_usage() {
         if (m_total_us == 0) return;
 
-        LOG_DEBUG("CPU USAGE");
-
         uint32_t sum_busy = 0;
         for (uint8_t i = 0; i < m_count; ++i) {
             uint32_t pct_x100 = (uint32_t)((uint64_t)m_tasks[i].busy_us * 10000 / m_total_us);
@@ -53,7 +51,8 @@ class TaskScheduler {
             LOG_DEBUG("     [{}]     {}.{}%", m_tasks[i].name, pct_x100 / 100, pct_x100 % 100);
         }
         uint32_t total_x100 = (uint32_t)((uint64_t)sum_busy * 10000 / m_total_us);
-        LOG_DEBUG("     [Total]      {}.{}%", total_x100 / 100, total_x100 % 100);
+        LOG_DEBUG("CPU USAGE: {}.{}%", total_x100 / 100, total_x100 % 100);
+        LOG_DEBUG("===================================");
         reset_stats();
     }
 

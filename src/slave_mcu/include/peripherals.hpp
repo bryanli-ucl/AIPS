@@ -67,16 +67,18 @@ struct {
     bool SPI      = true;
     bool OLED1362 = true;
 
-    bool IIC         = true;
-    bool OLED1306    = true;
+    bool IIC      = true;
+    bool OLED1306 = true;
+
+    bool IIC1        = true;
     bool MasterBoard = true;
 
     bool LiDAR = true;
     bool IR    = false;
     bool Servo = true;
 
-    bool Modulino = true;
-    bool Buzzer   = true;
+    bool Modulino = false; // DO NOT OPEN !!!
+    bool Buzzer   = false;
 
     bool WiFi = false;
 

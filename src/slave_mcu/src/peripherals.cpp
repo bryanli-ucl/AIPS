@@ -41,28 +41,40 @@ auto begin() -> void {
             LOG_DONE();
 
             if constexpr (true) {
+                LOG_INFO("I2C scanning...");
                 for (byte addr = 0x01; addr < 0x7F; addr++) {
                     Wire.beginTransmission(addr);
                     byte error = Wire.endTransmission();
                     if (error == 0) {
                         LOG_INFO("Found I2C device at 0x{h}", addr);
                     } else {
-                        LOG_INFO("No I2C device at 0x{h}", addr);
+                        // LOG_INFO("No I2C device at 0x{h}", addr);
                     }
                 }
             }
         } else
             LOG_SKIP();
-    }
 
-    { // MasterMCU
-        LOG_INFO_START("Initializing IIC Commu");
-        if constexpr (initializing_list.MasterBoard) {
-            iic_commu::begin();
+        LOG_INFO_START("Initializing IIC1");
+        if (initializing_list.IIC1) {
+            Wire1.begin(iic_addrs::SlaveMCU);
+            Wire1.setClock(100000); // 100kHz
+            delay(300);
             LOG_DONE();
+
+            { // MasterMCU
+                LOG_INFO_START("Initializing IIC Commu");
+                if constexpr (initializing_list.MasterBoard) {
+                    iic_commu::begin();
+                    LOG_DONE();
+                } else
+                    LOG_SKIP();
+            }
+
         } else
             LOG_SKIP();
     }
+
 
     { // LiDAR
         LOG_INFO_START("Initializing LiDAR");

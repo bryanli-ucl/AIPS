@@ -55,20 +55,22 @@ extern WifiCommu udp_comm;
 
 
 extern master_to_slave_iic_data_t master_data;
-extern slave_to_master_iic_data_t slave_data;
+extern slave_to_master_iic_data_t slave2master_data;
 
 struct {
 
     bool Modulino = true;
     bool Buttons  = false;
     bool Pixels   = false;
-    bool Knob     = false;
-    bool IMU      = true;
+    bool Knob     = true;
+    bool Movement = false;
     bool Buzzer   = false;
-    bool IIC      = true;
-    bool Motor    = true;
-    bool Motoron  = true;
-    bool WiFi     = true;
+    bool Slave    = true;
+
+    bool IIC     = true;
+    bool Motor   = true;
+    bool Motoron = true;
+    bool WiFi    = true;
 
 } constexpr initializing_list;
 

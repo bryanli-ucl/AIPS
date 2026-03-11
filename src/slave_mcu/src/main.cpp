@@ -10,8 +10,7 @@ using namespace ::literals;
 TaskScheduler scheduler{};
 
 static int16_t dists[91]{};
-static int16_t prev_dists[91]{};
-static int16_t servo_angle{ 1 };
+static int16_t servo_angle{};
 
 void setup() {
 
@@ -23,7 +22,7 @@ void setup() {
     { // board info
         LOG_SECTION("ARDUINO UNO R4 WIFI SLAVE BOARS");
         LOG_INFO("sizeof(master_data): {}", sizeof(master_to_slave_iic_data_t));
-        LOG_INFO("sizeof(slave_data): {}", sizeof(slave_to_master_iic_data_t));
+        LOG_INFO("sizeof(slave2master_data): {}", sizeof(slave_to_master_iic_data_t));
     }
 
     { // init peripherals
@@ -73,6 +72,11 @@ void setup() {
 
             uint16_t pos = qtr.readLineBlack(sensor_values);
             // LOG_DEBUG("Position: {}", pos);
+
+            auto& data = iic_commu::slave2master_data;
+
+            data.target_vel = 18.88f;
+            data.target_yaw = 1145.14f;
         },
         "Process IR");
 
@@ -102,6 +106,8 @@ void setup() {
 
         scheduler.add(100, []() { // OLED 1362 Display
             auto& disp = oled1306.get_disp();
+
+            static int16_t prev_dists[91]{};
 
             // Rendering
             if (servo_angle & 0b111) {
