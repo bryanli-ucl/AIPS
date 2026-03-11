@@ -40,7 +40,7 @@ auto setup() -> void {
         LOG_INFO("Pitch PID");
 
         pitch_pid.reset();
-        pitch_pid.set_paras({ 100.f, 300.0f, 7.5f });
+        pitch_pid.set_paras({ 100.f, 0.0f, 7.5f });
         pitch_pid.set_target(g_pitch_target_rad);
         pitch_pid.set_integral_limit(300);
 
@@ -50,12 +50,14 @@ auto setup() -> void {
         motor_l.set_integral_limit(200.f);
         motor_l.set_target_avel(0rad_s);
         motor_l.set_power_constrain(400);
+        motor_l.set_dead_zone(50);
 
         motor_r.reset();
         motor_r.set_paras({ 30.f, 20.f, 0.f });
         motor_r.set_integral_limit(200.f);
         motor_r.set_target_avel(0rad_s);
         motor_r.set_power_constrain(400);
+        motor_r.set_dead_zone(50);
 
         LOG_INFO("Yaw PID");
         yaw_pid.reset();
@@ -202,7 +204,7 @@ auto setup() -> void {
 
             // mix velocity and rotation
             yaw_corr = 0;
-            motor_l.set_target_avel(-avel_t((target_avel - atanf(yaw_corr) * (1 / TWO_PI))));
+            motor_l.set_target_avel(avel_t((target_avel - atanf(yaw_corr) * (1 / TWO_PI))));
             motor_r.set_target_avel(-avel_t((target_avel + atanf(yaw_corr) * (1 / TWO_PI))));
 
             // motor_l.update_power_force(-10 * ((target_avel - atanf(yaw_corr) * (1 / TWO_PI))));
@@ -214,8 +216,8 @@ auto setup() -> void {
         scheduler.add(5, []() { // update motor velocity pid
             static constexpr dura_t dt = 20ms;
 
-            // motor_l.set_target_avel(15rad_s);
-            // motor_r.set_target_avel(-15rad_s);
+            //motor_l.set_target_avel(5rad_s);
+            //motor_r.set_target_avel(-5rad_s);
 
             motor_l.calc_velocity(dt);
             motor_l.update_power(dt);
