@@ -11,9 +11,10 @@ using namespace ::literals;
 class IMUController {
     public:
     struct State {
-        float yaw   = 0.f;
-        float pitch = 0.f;
-        float roll  = 0.f;
+        float yaw        = 0.f;
+        float pitch      = 0.f;
+        float pitch_gyro = 0.f;
+        float roll       = 0.f;
     };
 
     IMUController(ModulinoMovement& imu) : m_imu(imu) {}
@@ -31,11 +32,12 @@ class IMUController {
 
         { // pitch
 
-            float gyro      = m_imu.getPitch() * DEG_TO_RAD; // rad/s
-            float ax        = m_imu.getY();
-            float az        = m_imu.getZ();
-            float accel_ang = -atan2f(ax, az); // rad
-            m_state.pitch   = m_pitch_kf.update(gyro, accel_ang, dt);
+            float gyro         = m_imu.getPitch() * DEG_TO_RAD; // rad/s
+            float ax           = m_imu.getY();
+            float az           = m_imu.getZ();
+            float accel_ang    = -atan2f(ax, az); // rad
+            m_state.pitch_gyro = gyro;
+            m_state.pitch      = m_pitch_kf.update(gyro, accel_ang, dt);
         }
 
         { // roll
@@ -60,6 +62,7 @@ class IMUController {
 
     float get_pitch_rad() const { return m_state.pitch; }
     float get_pitch_deg() const { return m_state.pitch * RAD_TO_DEG; }
+    float get_pitch_gyro_rad() const { return m_state.pitch_gyro; }
 
     float get_roll_rad() const { return m_state.roll; }
     float get_roll_deg() const { return m_state.roll * RAD_TO_DEG; }

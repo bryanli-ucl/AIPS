@@ -62,8 +62,8 @@ struct {
     bool Modulino = true;
     bool Buttons  = false;
     bool Pixels   = false;
-    bool Knob     = true;
-    bool Movement = false;
+    bool Knob     = false;
+    bool Movement = true;
     bool Buzzer   = false;
     bool Slave    = true;
 

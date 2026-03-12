@@ -14,7 +14,7 @@ PID_Controller pitch_pid;
 PID_Controller yaw_pid;
 PID_Controller bot_vel_pid;
 TaskScheduler scheduler;
-float g_pitch_target_rad = 0.11f;
+float g_pitch_target_rad = -0.13f;
 
 auto setup() -> void {
 
@@ -40,7 +40,7 @@ auto setup() -> void {
         LOG_INFO("Pitch PID");
 
         pitch_pid.reset();
-        pitch_pid.set_paras({ 100.f, 0.0f, 7.5f });
+        pitch_pid.set_paras({ 45.f, 0.0f, 0.5f });
         pitch_pid.set_target(g_pitch_target_rad);
         pitch_pid.set_integral_limit(300);
 
@@ -50,14 +50,14 @@ auto setup() -> void {
         motor_l.set_integral_limit(200.f);
         motor_l.set_target_avel(0rad_s);
         motor_l.set_power_constrain(400);
-        motor_l.set_dead_zone(50);
+        motor_l.set_dead_zone(20);
 
         motor_r.reset();
         motor_r.set_paras({ 30.f, 20.f, 0.f });
         motor_r.set_integral_limit(200.f);
         motor_r.set_target_avel(0rad_s);
         motor_r.set_power_constrain(400);
-        motor_r.set_dead_zone(50);
+        motor_r.set_dead_zone(20);
 
         LOG_INFO("Yaw PID");
         yaw_pid.reset();
@@ -66,7 +66,7 @@ auto setup() -> void {
 
         LOG_INFO("Bot Vel PID");
         bot_vel_pid.reset();
-        bot_vel_pid.set_paras({ 1.f, 0.f, 0.f });
+        bot_vel_pid.set_paras({ .05f, 0.f, 0.f });
         bot_vel_pid.set_target(0);
     }
 
@@ -148,7 +148,7 @@ auto setup() -> void {
         },
         "Print Stats");
 
-        scheduler.add(-1, []() { // Process UDP for Pitch PID tuning
+        scheduler.add(200, []() { // Process UDP for Pitch PID tuning
             static uint8_t buf[128] = {};
 
             const int pack_len = udp.parsePacket();
@@ -178,9 +178,9 @@ auto setup() -> void {
                 return;
             }
 
-            g_pitch_target_rad = target;
+            // g_pitch_target_rad = target;
             pitch_pid.set_paras({ kp, ki, kd });
-            pitch_pid.set_target(g_pitch_target_rad);
+            pitch_pid.set_target(target);
             pitch_pid.reset();
 
             LOG_INFO("Pitch PID updated by UDP: target={}, kp={}, ki={}, kd={}",
@@ -207,14 +207,20 @@ auto setup() -> void {
             // bot vel pid
             float bot_vel = (motor_r.get_avel().v - motor_l.get_avel().v) * 0.5f;
 
+            // float target_pitch = bot_vel_pid.update(bot_vel, dt);
             float target_pitch = bot_vel_pid.update(bot_vel, dt);
-            target_pitch       = constrain(target_pitch, -5 * DEG_TO_RAD, 5 * DEG_TO_RAD);
-            target_pitch       = g_pitch_target_rad;
-            pitch_pid.set_target(target_pitch);
+            target_pitch       = constrain(target_pitch, -0.5 * DEG_TO_RAD, 0.5 * DEG_TO_RAD);
+            // target_pitch       = g_pitch_target_rad;
+            pitch_pid.set_target(target_pitch + g_pitch_target_rad);
 
             // pitch pid
             float pitch_angle = imu_ctrl.get_pitch_rad();
-            float target_avel = pitch_pid.update(-pitch_angle, dt);
+            // float target_avel = pitch_pid.update(-pitch_angle, dt, imu_ctrl.get_pitch_gyro_rad());
+            float target_avel;
+            {
+                auto [kp, ki, kd] = pitch_pid.get_paras();
+                target_avel       = kp * (pitch_pid.get_target() - (-pitch_angle)) - kd * imu_ctrl.get_pitch_gyro_rad();
+            }
             LOG_TRACE("Target Vel: {}, pitch_angle: {}", target_avel, pitch_angle);
 
             // yaw pid
