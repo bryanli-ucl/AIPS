@@ -135,22 +135,20 @@ auto setup() -> void {
         },
         "Board Communication");
 
-        scheduler.add(-1, []() { // Print CPU Usage
+        scheduler.add(5000, []() { // Print CPU Usage
             scheduler.print_cpu_usage();
         },
         "Print CPU Usage");
 
-        scheduler.add(500, []() { // Print Stats
+        scheduler.add(2000, []() { // Print Stats
             static constexpr dura_t dt = 300ms;
-            // LOG_INFO("Left Motor Status: pwr:{}, avel:{}, pos:{}", motor_l.get_power(), motor_l.get_avel(), motor_l.get_count());
-            // LOG_INFO("Right Motor Status: pwr:{}, avel:{}, pos:{}", motor_r.get_power(), motor_r.get_avel(), motor_r.get_count());
-            // LOG_INFO("State: Roll{}, Pitch{}, Yaw{}", imu_ctrl.get_roll_deg(), imu_ctrl.get_pitch_deg(), imu_ctrl.get_yaw_deg());
-            LOG_INFO("{} {} {} {} {}", motor_r.get_avel(), motor_r.get_power(), motor_l.get_avel(), motor_l.get_power(), imu_ctrl.get_pitch_deg());
-            LOG_INFO("Knob: {}", knob.get());
+            LOG_INFO("Left Motor Status: pwr:{}, avel:{}, pos:{}", motor_l.get_power(), motor_l.get_avel(), motor_l.get_count());
+            LOG_INFO("Right Motor Status: pwr:{}, avel:{}, pos:{}", motor_r.get_power(), motor_r.get_avel(), motor_r.get_count());
+            LOG_INFO("State: Roll{}, Pitch{}, Yaw{}", imu_ctrl.get_roll_deg(), imu_ctrl.get_pitch_deg(), imu_ctrl.get_yaw_deg());
         },
         "Print Stats");
 
-        scheduler.add(200, []() { // Process UDP for Pitch PID tuning
+        scheduler.add(-1, []() { // Process UDP for Pitch PID tuning
             static uint8_t buf[128] = {};
 
             const int pack_len = udp.parsePacket();

@@ -58,11 +58,11 @@ constexpr Vector normalize(Vector v) {
 }
 
 constexpr float module_vec(Vector v) {
-    return sqrt(v.x * v.x + v.y + v.y + v.z * v.z);
+    return sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
 }
 
 constexpr float module_vec_sq(Vector v) {
-    return v.x * v.x + v.y + v.y + v.z * v.z;
+    return v.x * v.x + v.y * v.y + v.z * v.z;
 }
 
 template <size_t N>

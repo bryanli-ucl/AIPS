@@ -24,6 +24,8 @@
 #include "oled1362.hpp"
 #include "udp_commu.hpp"
 
+#include "igor_face.hpp"
+
 #include "serial_logger.hpp"
 
 namespace peripherals {
@@ -80,7 +82,7 @@ struct {
     bool Modulino = false; // DO NOT OPEN !!!
     bool Buzzer   = false;
 
-    bool WiFi = false;
+    bool WiFi = true;
 
 } constexpr initializing_list;
 

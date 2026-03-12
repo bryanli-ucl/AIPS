@@ -12,6 +12,9 @@ TaskScheduler scheduler{};
 static int16_t dists[91]{};
 static int16_t servo_angle{};
 
+static float target_yaw{};
+static float target_speed{};
+
 void setup() {
 
     { // logger (Serial)
@@ -34,7 +37,7 @@ void setup() {
 
     { // Scheuler Tasks
 
-        scheduler.add(-1, []() { // UDP
+        scheduler.add(100, []() { // UDP
             // Check and Recieve data
             static uint8_t buf[256] = {};
 
@@ -60,23 +63,31 @@ void setup() {
 
             // Process Recieved Data
 
+            target_speed = module_vec(data.target_vel);
+            target_yaw   = atan2(data.target_vel.x, data.target_vel.y);
+
             if (module_vec_sq(data.target_vel)) {
-                LOG_DEBUG("Received Contents: {}, {}", data.target_vel.x, data.target_vel.y);
+                LOG_TRACE("Received Contents: {}, {}", data.target_vel.x, data.target_vel.y);
                 buzzer.tone(440, 20);
             }
         },
         "Process UDP");
 
-        scheduler.add(50, []() { // IR
-            static uint16_t sensor_values[IR_CONUT] = {};
+        scheduler.add(300, []() { // IR
+            static uint16_t sensor_values[IR_CONUT]{};
+            uint16_t pos = qtr.readLineWhite(sensor_values, QTRReadMode::On);
 
-            uint16_t pos = qtr.readLineBlack(sensor_values);
-            // LOG_DEBUG("Position: {}", pos);
+            LOG_INFO("IR_POS: {}", pos);
+            LOG_INFO("IR_VAL: {} {} {} {} {} {} {} {} {}",
+            sensor_values[0], sensor_values[1], sensor_values[2],
+            sensor_values[3], sensor_values[4], sensor_values[5],
+            sensor_values[6], sensor_values[7], sensor_values[8]);
 
+            // Prepare Data for Master requests
             auto& data = iic_commu::slave2master_data;
 
-            data.target_vel = 18.88f;
-            data.target_yaw = 1145.14f;
+            data.target_vel = target_speed;
+            data.target_yaw = target_yaw;
         },
         "Process IR");
 
@@ -104,82 +115,106 @@ void setup() {
         },
         "Process IIC");
 
-        scheduler.add(100, []() { // OLED 1362 Display
-            auto& disp = oled1306.get_disp();
+        scheduler.add(-1, []() { // OLED 1306 Display
+        },
+        "OLED 1306 Display (LiDAR Graph)");
 
-            static int16_t prev_dists[91]{};
+        scheduler.add(100, []() { // OLED 1362
+            auto draw_left = [](U8G2& d) {
+                d.setFont(u8g2_font_6x12_tf);
+                String line{};
 
-            // Rendering
-            if (servo_angle & 0b111) {
-                constexpr int16_t HEIGHT = 64;
-                constexpr int16_t WIDTH  = 128;
+                float speed = target_speed;
+                String dst  = "P1";
+                String mode = "Manual";
 
-                static int16_t prev_angle{ -1 };
+                line = "SPD: " + String(static_cast<int>(target_speed)) + "cm/s";
+                d.drawStr(4, 14, line.c_str());
 
-                auto p2xy = [](int16_t r, int16_t theta) -> std::tuple<int16_t, int16_t> const {
-                    return { (float)r * sinf((float)theta * DEG_TO_RAD), (float)r * cosf((float)theta * DEG_TO_RAD) };
+                line = "DST: " + dst;
+                d.drawStr(4, 30, line.c_str());
+
+                line = "MODE: " + mode;
+                d.drawStr(4, 46, line.c_str());
+            };
+
+            auto draw_mid = [](U8G2& d) {
+                int cx = 128;
+                int cy = 32;
+
+                d.drawCircle(cx, cy, 30);
+                d.drawDisc(cx, cy, 2);
+
+                if (fabs(target_speed) > 0.1f) {
+                    float rad = target_yaw;
+                    float r   = 28;
+                    int x     = cx + r * cos(rad);
+                    int y     = cy - r * sin(rad);
+
+                    d.drawLine(cx, cy, x, y);
+
+                    float l = 8;
+                    d.drawLine(x, y, x - l * cos(rad - HALF_PI / 2.f), y + l * sin(rad - HALF_PI / 2.f));
+                    d.drawLine(x, y, x - l * cos(rad + HALF_PI / 2.f), y + l * sin(rad + HALF_PI / 2.f));
+                }
+            };
+
+            auto draw_right = [](U8G2& d) {
+                constexpr int16_t cx = 256 - 85 / 2;
+                constexpr int16_t cy = 63;
+                constexpr int16_t l  = 55;
+
+                auto p2xy = [](int16_t r, int16_t theta) {
+                    auto t = theta * DEG_TO_RAD;
+                    return std::tuple<int16_t, int16_t>(
+                    r * sinf(t),
+                    r * cosf(t));
                 };
 
-                auto dist2disp = [](int16_t d) -> float {
-                    return constrain(log2f(d) * 8 - 10, 3, 60);
+                auto dist2disp = [=](int16_t d) -> float {
+                    return constrain(log2f(d) * 6 - 6, 10, l);
                 };
 
-                for (int deg = 0; deg <= 90; deg++) {
-                    auto [x, y] = p2xy(dist2disp(prev_dists[deg]), deg - 45);
-                    disp.drawPixel(WIDTH / 2 + x, HEIGHT - y, SSD1306_BLACK);
+                for (auto t : { -45, 0, 45, servo_angle - 45 }) {
+                    auto [x, y] = p2xy(l, t);
+                    d.drawLine(cx, cy, cx + x, cy - y);
                 }
 
-
-                auto draw_line = [&disp, p2xy](int16_t t, uint16_t color) -> void {
-                    auto [x, y] = p2xy(60, t);
-                    disp.drawLine(WIDTH / 2, HEIGHT, WIDTH / 2 + x, HEIGHT - y, color);
-                    return;
-                };
-
-                for (const auto& t : { -45, 0, 45 }) {
-                    draw_line(t, SSD1306_WHITE);
+                for (const auto& r : { 15, 30, (int)(l) }) {
+                    static constexpr float factor = 255. / 360.;
+                    d.drawArc(cx, cy, r, 45 * factor, 135 * factor);
                 }
-
-                if (prev_angle != -1) {
-                    int16_t t = prev_angle - 45;
-                    draw_line(t, SSD1306_BLACK);
-                    for (const auto& r : { 15, 30, 45, 60 }) {
-                        auto [x, y] = p2xy(r, t);
-                        disp.drawPixel(WIDTH / 2 + x, HEIGHT - y, SSD1306_WHITE);
-                    }
-                }
-                draw_line(servo_angle - 45, SSD1306_WHITE);
 
                 for (int deg = 0; deg <= 90; deg++) {
                     auto [x, y] = p2xy(dist2disp(dists[deg]), deg - 45);
-                    disp.drawPixel(WIDTH / 2 + x, HEIGHT - y, SSD1306_WHITE);
+                    d.drawPixel(cx + x, cy - y);
                 }
+            };
 
-                memcpy(prev_dists, dists, sizeof(dists));
+            auto& d = oled1362.get_disp();
+            d.clearBuffer();
 
-                prev_angle = servo_angle;
+            draw_left(d);
+            d.drawVLine(85, 0, 64);
+            draw_mid(d);
+            d.drawVLine(170, 0, 64);
+            draw_right(d);
 
-                disp.display();
-            }
+            d.sendBuffer();
+
         },
-        "OLED 1306 Display");
-
-        scheduler.add(1000, []() { // OLED 1362
-            // oled1362.clear();
-            // oled1362.disp_status("OLED 1362", "Display Demo", "hello!!!");
-        },
-        "OLED 1362 Display");
+        "OLED 1362 Display ");
 
         scheduler.add(20, []() { // LiDAR
             static int8_t sign{ 1 };
 
-            delayMicroseconds(300);
+            tfl.Set_Trigger(iic_addrs::LiDAR);
 
             // data reading
             if (tfl.getData(dists[servo_angle], iic_addrs::LiDAR)) {
                 // LOG_DEBUG("LiDAR Reading: {}cm", dists[servo_angle]);
             } else {
-                LOG_ERROR("LiDAR Read Error: ");
+                LOG_ERROR_START("LiDAR Read Error: ");
                 tfl.printStatus();
                 Serial.println();
                 tfl.Soft_Reset(iic_addrs::LiDAR);
@@ -194,7 +229,7 @@ void setup() {
             if (servo_angle <= 0) sign = 1;
             servo_angle = (servo_angle + 1 * sign);
         },
-        "Lidar & Display");
+        "Lidar Reading & Servo");
 
         scheduler.reset();
     }

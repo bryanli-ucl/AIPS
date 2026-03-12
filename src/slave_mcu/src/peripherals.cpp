@@ -80,9 +80,11 @@ auto begin() -> void {
         LOG_INFO_START("Initializing LiDAR");
         if constexpr (initializing_list.LiDAR && initializing_list.IIC) {
             if (tfl.Soft_Reset(iic_addrs::LiDAR)) {
+                tfl.Set_Trig_Mode(iic_addrs::LiDAR);
                 LOG_DONE();
             } else {
                 LOG_FAIL();
+                tfl.printDataArray();
             }
         } else {
             LOG_SKIP();
@@ -110,25 +112,12 @@ auto begin() -> void {
             else {
                 oled1306.enable();
 
-                constexpr int16_t HEIGHT = 64;
-                constexpr int16_t WIDTH  = 128;
-                auto& disp               = oled1306.get_disp();
+                auto& disp = oled1306.get_disp();
 
+                disp.setRotation(1);
+                disp.invertDisplay(true);
                 disp.clearDisplay();
-
-                const auto p2xy = [](int16_t r, int16_t t) -> std::tuple<int16_t, int16_t> {
-                    return { (float)r * sinf((float)t * DEG_TO_RAD), (float)r * cosf((float)t * DEG_TO_RAD) };
-                };
-
-                for (const auto& r : { 15, 30, 45, 60 }) {
-                    disp.drawCircle(WIDTH / 2, HEIGHT, r, SSD1306_WHITE);
-                }
-
-                for (const auto& t : { -45, 0, 45 }) {
-                    auto [x, y] = p2xy(60, t);
-                    disp.drawLine(WIDTH / 2, HEIGHT, WIDTH / 2 + x, HEIGHT - y, SSD1306_WHITE);
-                }
-
+                disp.drawBitmap(0, 0, igor_bitmap, 64, 128, WHITE);
                 disp.display();
 
                 LOG_DONE();
@@ -179,20 +168,20 @@ auto begin() -> void {
                               IR_READ_7, IR_READ_8, IR_READ_9 },
             IR_CONUT);
 
-            qtr.setEmitterPins(IR_CTRL, IR_CTRL);
+            qtr.setEmitterPin(IR_CTRL);
 
             delay(400);
 
-            for (int i = 0; i < 400; i++) {
+            for (int i = 0; i < 100; i++) {
                 qtr.calibrate();
             }
 
             LOG_DONE();
 
             for (uint8_t i = 0; i < IR_CONUT; i++)
-                LOG_DEBUG("     qtr.calibrationOn.minimum[{}]: ", i, qtr.calibrationOn.minimum[i]);
+                LOG_DEBUG("     qtr.calibrationOn.minimum[{}]: {}", i, qtr.calibrationOn.minimum[i]);
             for (uint8_t i = 0; i < IR_CONUT; i++)
-                LOG_DEBUG("     qtr.calibrationOn.maximum[{}]: ", i, qtr.calibrationOn.maximum[i]);
+                LOG_DEBUG("     qtr.calibrationOn.maximum[{}]: {}", i, qtr.calibrationOn.maximum[i]);
 
         } else
             LOG_SKIP();

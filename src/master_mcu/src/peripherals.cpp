@@ -100,7 +100,7 @@ auto begin() -> void {
                     if (error == 0) {
                         LOG_INFO("Found I2C1 device at 0x{h}", addr);
                     } else {
-                        LOG_INFO("No I2C1 device at 0x{h}, err = {}", addr, error);
+                        LOG_TRACE("No I2C1 device at 0x{h}, err = {}", addr, error);
                     }
                 }
             }
