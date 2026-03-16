@@ -40,7 +40,7 @@ avel_t Motor::calc_velocity(dura_t dt) {
     m_prev_count  = count;
 
     constexpr float GEAR_RATIO    = (22.f / 12.f) * (22.f / 10.f) * (24.f / 10.f);
-    constexpr float RAW_CPR       = 12.f * 2;
+    constexpr float RAW_CPR       = 24.f;
     constexpr float CPR_REV       = 1 / (GEAR_RATIO * RAW_CPR);
     constexpr float CONSTANT_PART = CPR_REV * TWO_PI;
 

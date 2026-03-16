@@ -14,7 +14,12 @@ PID_Controller pitch_pid;
 PID_Controller yaw_pid;
 PID_Controller bot_vel_pid;
 TaskScheduler scheduler;
-float g_pitch_target_rad = -0.13f;
+
+struct {
+    float pitch_target_eq_rad = -0.13f;
+} constant;
+
+static slave_to_master_iic_data_t s2m_data{};
 
 auto setup() -> void {
 
@@ -41,7 +46,7 @@ auto setup() -> void {
 
         pitch_pid.reset();
         pitch_pid.set_paras({ 45.f, 0.0f, 0.5f });
-        pitch_pid.set_target(g_pitch_target_rad);
+        pitch_pid.set_target(constant.pitch_target_eq_rad);
         pitch_pid.set_integral_limit(300);
 
         LOG_INFO("Motor Velocity PID");
@@ -66,7 +71,7 @@ auto setup() -> void {
 
         LOG_INFO("Bot Vel PID");
         bot_vel_pid.reset();
-        bot_vel_pid.set_paras({ .05f, 0.f, 0.f });
+        bot_vel_pid.set_paras({ .0f, 0.f, 0.f });
         bot_vel_pid.set_target(0);
     }
 
@@ -88,7 +93,7 @@ auto setup() -> void {
         scheduler.add(-1, []() { // Fall Check
             static constexpr dura_t dt        = 200ms;
             constexpr auto FALL_THRESHOLD_RAD = 30 * DEG_TO_RAD;
-            if (imu_ctrl.get_pitch_rad() > FALL_THRESHOLD_RAD) {
+            if (fabs(imu_ctrl.get_pitch_rad()) > FALL_THRESHOLD_RAD) {
                 while (true) {
                     motoron.setAllSpeedsNow(0);
                     // asm volatile("halt");
@@ -102,35 +107,22 @@ auto setup() -> void {
         scheduler.add(80, []() { // Board Communication
             static constexpr dura_t dt = 80ms;
 
-            // master_data.value1      = 1;
-            // master_data.value2      = -2;
-            // master_data.value3      = dt.v;
-            // master_data.is_new_data = true;
-            // Wire.beginTransmission(static_cast<uint8_t>(iic_addrs::SlaveMCU));
-            // Wire.write((uint8_t*)&master_data, sizeof(master_data));
-            // auto error = Wire.endTransmission();
+            int len = Wire1.requestFrom(iic_addrs::SlaveMCU, sizeof(s2m_data));
 
-            // if (error != 0)
-            //     LOG_DEBUG("Transmission Error: {}", error);
-
-            static slave_to_master_iic_data_t data{};
-
-            int len = Wire1.requestFrom(iic_addrs::SlaveMCU, sizeof(data));
-
-            if (len != sizeof(data)) {
+            if (len != sizeof(s2m_data)) {
                 while (Wire1.available()) Wire1.read();
                 return;
             }
 
             {
-                uint8_t* ptr = reinterpret_cast<uint8_t*>(&data);
+                uint8_t* ptr = reinterpret_cast<uint8_t*>(&s2m_data);
                 while (Wire1.available()) {
                     *ptr = Wire1.read();
                     ptr++;
                 }
             }
 
-            LOG_INFO("From Slave: bot vel: {}, yaw vel: {}", data.target_vel, data.target_yaw);
+            LOG_INFO("From Slave: bot vel: {}, yaw vel: {}", s2m_data.target_vel, s2m_data.target_yaw);
 
         },
         "Board Communication");
@@ -148,52 +140,85 @@ auto setup() -> void {
         },
         "Print Stats");
 
-        scheduler.add(200, []() { // Process UDP for Pitch PID tuning
-            static uint8_t buf[128] = {};
+        scheduler.add(200, []() { // UDP
+            struct udp_pid_packet_t {
+                uint8_t pid_id;
+                float target;
+                float kp;
+                float ki;
+                float kd;
+            } __attribute__((__packed__));
 
-            const int pack_len = udp.parsePacket();
+            static uint8_t buf[128];
+
+            int pack_len = udp.parsePacket();
             if (pack_len <= 0) return;
 
-            const int len = udp.read(buf, sizeof(buf) - 1);
-            if (len <= 0) return;
+            int len = udp.read(buf, sizeof(buf));
 
-            float target = g_pitch_target_rad;
-            float kp, ki, kd;
-            std::tie(kp, ki, kd) = pitch_pid.get_paras();
-
-            bool parsed = false;
-
-            if (len == static_cast<int>(sizeof(float) * 4)) {
-                float vals[4];
-                memcpy(vals, buf, sizeof(vals));
-                target = vals[0];
-                kp     = vals[1];
-                ki     = vals[2];
-                kd     = vals[3];
-                parsed = true;
-            }
-
-            if (!parsed) {
-                LOG_WARN("Unknown UDP payload format, len={}, {}", len, reinterpret_cast<const char*>(buf));
+            if (len != sizeof(udp_pid_packet_t)) {
+                LOG_WARN("UDP packet size error {}", len);
                 return;
             }
+            auto* pkt = reinterpret_cast<udp_pid_packet_t*>(buf);
 
-            // g_pitch_target_rad = target;
-            pitch_pid.set_paras({ kp, ki, kd });
-            pitch_pid.set_target(target);
-            pitch_pid.reset();
+            float target = pkt->target;
+            float kp     = pkt->kp;
+            float ki     = pkt->ki;
+            float kd     = pkt->kd;
 
-            LOG_INFO("Pitch PID updated by UDP: target={}, kp={}, ki={}, kd={}",
-            g_pitch_target_rad, kp, ki, kd);
+            auto update_pid = [&](PID_Controller& pid) {
+                pid.set_paras({ kp, ki, kd });
+                pid.set_target(target);
+                pid.reset();
+            };
 
-            char ack[96];
-            snprintf(ack, sizeof(ack), "OK target=%.5f kp=%.5f ki=%.5f kd=%.5f\n",
-            g_pitch_target_rad, kp, ki, kd);
+            switch (pkt->pid_id) {
+            case 0:
+                update_pid(pitch_pid);
+                break;
+
+            case 1:
+                update_pid(yaw_pid);
+                break;
+
+            case 2:
+                update_pid(bot_vel_pid);
+                break;
+
+            case 3:
+                motor_l.set_paras({ kp, ki, kd });
+                break;
+
+            case 4:
+                motor_r.set_paras({ kp, ki, kd });
+                break;
+            }
+
+            LOG_INFO(
+            "PID {} updated target={} kp={} ki={} kd={}",
+            pkt->pid_id,
+            pkt->target,
+            pkt->kp,
+            pkt->ki,
+            pkt->kd);
+
+            char ack[64];
+
+            snprintf(
+            ack,
+            sizeof(ack),
+            "OK pid=%d kp=%.2f ki=%.2f kd=%.2f",
+            pkt->pid_id,
+            pkt->kp,
+            pkt->ki,
+            pkt->kd);
+
             udp.beginPacket(udp.remoteIP(), udp.remotePort());
-            udp.write(reinterpret_cast<const uint8_t*>(ack), strlen(ack));
+            udp.write((uint8_t*)ack, strlen(ack));
             udp.endPacket();
         },
-        "Process UDP Pitch PID");
+        "UDP PID Tuning");
 
         scheduler.add(7, []() { // Update IMU
             static constexpr dura_t dt = 20ms;
@@ -201,27 +226,30 @@ auto setup() -> void {
         },
         "Update IMU");
 
+
         scheduler.add(5, []() { // Main PID Controller
-            static constexpr dura_t dt = 20ms;
+            static constexpr dura_t dt = 5ms;
 
             // bot vel pid
             float bot_vel = (motor_r.get_avel().v - motor_l.get_avel().v) * 0.5f;
 
             // float target_pitch = bot_vel_pid.update(bot_vel, dt);
             float target_pitch = bot_vel_pid.update(bot_vel, dt);
-            target_pitch       = constrain(target_pitch, -0.5 * DEG_TO_RAD, 0.5 * DEG_TO_RAD);
-            // target_pitch       = g_pitch_target_rad;
-            pitch_pid.set_target(target_pitch + g_pitch_target_rad);
+            target_pitch       = constrain(target_pitch, -5 * DEG_TO_RAD, 5 * DEG_TO_RAD);
+            // target_pitch       = 0;
+            pitch_pid.set_target(target_pitch + constant.pitch_target_eq_rad);
 
             // pitch pid
-            float pitch_angle = imu_ctrl.get_pitch_rad();
             // float target_avel = pitch_pid.update(-pitch_angle, dt, imu_ctrl.get_pitch_gyro_rad());
             float target_avel;
             {
+                float pitch_angle = imu_ctrl.get_pitch_rad();
+                float pitch_gyro  = imu_ctrl.get_pitch_gyro_rad();
                 auto [kp, ki, kd] = pitch_pid.get_paras();
-                target_avel       = kp * (pitch_pid.get_target() - (-pitch_angle)) - kd * imu_ctrl.get_pitch_gyro_rad();
+                auto err          = pitch_pid.get_target() - (-pitch_angle);
+                target_avel       = kp * err - kd * pitch_gyro;
             }
-            LOG_TRACE("Target Vel: {}, pitch_angle: {}", target_avel, pitch_angle);
+            LOG_TRACE("Target Vel: {}, pitch_angle: {}", target_avel, imu_ctrl.get_pitch_rad());
 
             // yaw pid
             float yaw_angle = imu_ctrl.get_yaw_rad();
@@ -232,14 +260,14 @@ auto setup() -> void {
             motor_l.set_target_avel(avel_t((target_avel - atanf(yaw_corr) * (1 / TWO_PI))));
             motor_r.set_target_avel(-avel_t((target_avel + atanf(yaw_corr) * (1 / TWO_PI))));
 
-            // motor_l.update_power_force(-10 * ((target_avel - atanf(yaw_corr) * (1 / TWO_PI))));
-            // motor_r.update_power_force(-10 * ((target_avel + atanf(yaw_corr) * (1 / TWO_PI))));
+            // motor_l.update_power_force(30 * ((target_avel - atanf(yaw_corr) * (1 / TWO_PI))));
+            // motor_r.update_power_force(-30 * ((target_avel + atanf(yaw_corr) * (1 / TWO_PI))));
 
         },
         "Main PID");
 
         scheduler.add(5, []() { // update motor velocity pid
-            static constexpr dura_t dt = 20ms;
+            static constexpr dura_t dt = 5ms;
 
             // motor_l.set_target_avel(5rad_s);
             // motor_r.set_target_avel(-5rad_s);

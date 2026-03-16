@@ -46,10 +46,6 @@ class PID_Controller {
     ~PID_Controller() noexcept = default;
 
     auto update(float val, dura_t rdt) -> float {
-        return update(val, rdt, val);
-    }
-
-    auto update(float val, dura_t rdt, float derr) -> float {
         float dt = rdt.v;
         if (m_first_sample) dt = 0;
 
