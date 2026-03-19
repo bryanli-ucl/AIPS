@@ -170,18 +170,9 @@ auto begin() -> void {
 
             qtr.setEmitterPin(IR_CTRL);
 
-            delay(400);
-
-            for (int i = 0; i < 100; i++) {
-                qtr.calibrate();
-            }
+            delay(100);
 
             LOG_DONE();
-
-            for (uint8_t i = 0; i < IR_CONUT; i++)
-                LOG_DEBUG("     qtr.calibrationOn.minimum[{}]: {}", i, qtr.calibrationOn.minimum[i]);
-            for (uint8_t i = 0; i < IR_CONUT; i++)
-                LOG_DEBUG("     qtr.calibrationOn.maximum[{}]: {}", i, qtr.calibrationOn.maximum[i]);
 
         } else
             LOG_SKIP();

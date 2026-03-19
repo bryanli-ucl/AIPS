@@ -104,7 +104,7 @@ auto setup() -> void {
         },
         "Fall Check");
 
-        scheduler.add(80, []() { // Board Communication
+        scheduler.add(-1, []() { // Board Communication
             static constexpr dura_t dt = 80ms;
 
             int len = Wire1.requestFrom(iic_addrs::SlaveMCU, sizeof(s2m_data));
@@ -132,7 +132,7 @@ auto setup() -> void {
         },
         "Print CPU Usage");
 
-        scheduler.add(2000, []() { // Print Stats
+        scheduler.add(-1, []() { // Print Stats
             static constexpr dura_t dt = 300ms;
             LOG_INFO("Left Motor Status: pwr:{}, avel:{}, pos:{}", motor_l.get_power(), motor_l.get_avel(), motor_l.get_count());
             LOG_INFO("Right Motor Status: pwr:{}, avel:{}, pos:{}", motor_r.get_power(), motor_r.get_avel(), motor_r.get_count());
@@ -140,7 +140,7 @@ auto setup() -> void {
         },
         "Print Stats");
 
-        scheduler.add(200, []() { // UDP
+        scheduler.add(1000, []() { // UDP
             struct udp_pid_packet_t {
                 uint8_t pid_id;
                 float target;
@@ -175,6 +175,7 @@ auto setup() -> void {
 
             switch (pkt->pid_id) {
             case 0:
+                constant.pitch_target_eq_rad = target;
                 update_pid(pitch_pid);
                 break;
 
@@ -220,18 +221,12 @@ auto setup() -> void {
         },
         "UDP PID Tuning");
 
-        scheduler.add(7, []() { // Update IMU
-            static constexpr dura_t dt = 20ms;
-            imu_ctrl.update(dt);
-        },
-        "Update IMU");
-
-
         scheduler.add(5, []() { // Main PID Controller
             static constexpr dura_t dt = 5ms;
 
+            imu_ctrl.update(dt);
             // bot vel pid
-            float bot_vel = (motor_r.get_avel().v - motor_l.get_avel().v) * 0.5f;
+            float bot_vel = (motor_r.get_avel().v + (-motor_l.get_avel().v)) * 0.5f;
 
             // float target_pitch = bot_vel_pid.update(bot_vel, dt);
             float target_pitch = bot_vel_pid.update(bot_vel, dt);
@@ -247,7 +242,8 @@ auto setup() -> void {
                 float pitch_gyro  = imu_ctrl.get_pitch_gyro_rad();
                 auto [kp, ki, kd] = pitch_pid.get_paras();
                 auto err          = pitch_pid.get_target() - (-pitch_angle);
-                target_avel       = kp * err - kd * pitch_gyro;
+                auto err_gyro     = pitch_pid.get_target() - (-pitch_gyro);
+                target_avel       = kp * err - kd * err_gyro;
             }
             LOG_TRACE("Target Vel: {}, pitch_angle: {}", target_avel, imu_ctrl.get_pitch_rad());
 
@@ -257,25 +253,25 @@ auto setup() -> void {
 
             // mix velocity and rotation
             yaw_corr = 0;
-            motor_l.set_target_avel(avel_t((target_avel - atanf(yaw_corr) * (1 / TWO_PI))));
-            motor_r.set_target_avel(-avel_t((target_avel + atanf(yaw_corr) * (1 / TWO_PI))));
+            // motor_l.set_target_avel(avel_t((target_avel - atanf(yaw_corr) * (1 / TWO_PI))));
+            // motor_r.set_target_avel(-avel_t((target_avel + atanf(yaw_corr) * (1 / TWO_PI))));
 
-            // motor_l.update_power_force(30 * ((target_avel - atanf(yaw_corr) * (1 / TWO_PI))));
-            // motor_r.update_power_force(-30 * ((target_avel + atanf(yaw_corr) * (1 / TWO_PI))));
+            motor_l.update_power_force(30 * ((target_avel - yaw_corr)));
+            motor_r.update_power_force(-30 * ((target_avel + yaw_corr)));
 
         },
         "Main PID");
 
-        scheduler.add(5, []() { // update motor velocity pid
-            static constexpr dura_t dt = 5ms;
+        scheduler.add(50, []() { // update motor velocity pid
+            static constexpr dura_t dt = 50ms;
 
             // motor_l.set_target_avel(5rad_s);
             // motor_r.set_target_avel(-5rad_s);
 
             motor_l.calc_velocity(dt);
-            motor_l.update_power(dt);
+            // motor_l.update_power(dt);
             motor_r.calc_velocity(dt);
-            motor_r.update_power(dt);
+            // motor_r.update_power(dt);
         },
         "Update Motor");
 

@@ -14,6 +14,7 @@ static int16_t servo_angle{};
 
 static float target_yaw{};
 static float target_speed{};
+static uint16_t item_type{};
 
 void setup() {
 
@@ -74,14 +75,22 @@ void setup() {
         "Process UDP");
 
         scheduler.add(300, []() { // IR
-            static uint16_t sensor_values[IR_CONUT]{};
-            uint16_t pos = qtr.readLineWhite(sensor_values, QTRReadMode::On);
+            static std::array<uint16_t, IR_CONUT> sensor_values;
+            qtr.read(sensor_values.data(), QTRReadMode::On);
 
-            LOG_INFO("IR_POS: {}", pos);
-            LOG_INFO("IR_VAL: {} {} {} {} {} {} {} {} {}",
-            sensor_values[0], sensor_values[1], sensor_values[2],
-            sensor_values[3], sensor_values[4], sensor_values[5],
-            sensor_values[6], sensor_values[7], sensor_values[8]);
+            for (auto& x : sensor_values) {
+                if (x > 150)
+                    x = 1;
+                else
+                    x = 0;
+            }
+
+
+            item_type = 0;
+            for (int i = 0; i < sensor_values.size(); i++) {
+                item_type |= sensor_values[i] << i;
+            }
+            LOG_INFO("{b}", item_type);
 
             // Prepare Data for Master requests
             auto& data = iic_commu::slave2master_data;
@@ -125,13 +134,12 @@ void setup() {
                 String line{};
 
                 float speed = target_speed;
-                String dst  = "P1";
                 String mode = "Manual";
 
                 line = "SPD: " + String(static_cast<int>(target_speed)) + "cm/s";
                 d.drawStr(4, 14, line.c_str());
 
-                line = "DST: " + dst;
+                line = "Item: " + String(item_type);
                 d.drawStr(4, 30, line.c_str());
 
                 line = "MODE: " + mode;
@@ -205,7 +213,7 @@ void setup() {
         },
         "OLED 1362 Display ");
 
-        scheduler.add(20, []() { // LiDAR
+        scheduler.add(-1, []() { // LiDAR
             static int8_t sign{ 1 };
 
             tfl.Set_Trigger(iic_addrs::LiDAR);

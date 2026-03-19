@@ -59,15 +59,15 @@ extern slave_to_master_iic_data_t slave2master_data;
 
 struct {
 
-    bool Modulino = false;
+    bool Modulino = true;
     bool Buttons  = false;
     bool Pixels   = false;
     bool Knob     = false;
     bool Movement = true;
-    bool Buzzer   = false;
+    bool Buzzer   = true;
     bool Slave    = true;
 
-    bool IIC     = false;
+    bool IIC     = true;
     bool Motor   = true;
     bool Motoron = true;
     bool WiFi    = true;
