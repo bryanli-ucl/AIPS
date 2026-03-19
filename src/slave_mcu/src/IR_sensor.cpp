@@ -4,6 +4,7 @@
 QTRSensors qtr;
 
 const uint8_t SensorCount = 9;
+const uint16_t BlackThreshold = 500;
 uint16_t sensorValues[SensorCount];
 
 void setup() {
@@ -46,17 +47,20 @@ void setup() {
 }
 
 void loop() {
-    // read calibrated sensor values and obtain a measure of the line position
-    // from 0 to 5000 (for a white line, use readLineWhite() instead)
-    // uint16_t position = qtr.readLineBlack(sensorValues);
-    qtr.read(sensorValues);
+    // Calibrated values are in the range 0-1000.
+    // Lower values usually mean white (higher reflectance),
+    // higher values usually mean black (lower reflectance).
+    qtr.readCalibrated(sensorValues);
 
-    // print the sensor values as numbers from 0 to 1000, where 0 means maximum
-    // reflectance and 1000 means minimum reflectance, followed by the line
-    // position
     for (uint8_t i = 0; i < SensorCount; i++) {
+        const char* color = sensorValues[i] > BlackThreshold ? "BLACK" : "WHITE";
+        Serial.print("S");
+        Serial.print(i);
+        Serial.print(":");
+        Serial.print(color);
+        Serial.print("(");
         Serial.print(sensorValues[i]);
-        Serial.print('\t');
+        Serial.print(")\t");
     }
     Serial.println();
 
