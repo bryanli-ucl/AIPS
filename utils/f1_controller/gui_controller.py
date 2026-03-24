@@ -54,7 +54,7 @@ KEY_VECTORS = {
     "d": (1.0, 0.0),
 }
 
-ROBOT_PACKET = struct.Struct("<H91bb")
+ROBOT_PACKET = struct.Struct("<H91bb20s")
 
 
 @dataclass(slots=True)
@@ -62,6 +62,7 @@ class RobotTelemetry:
     item_type: int
     dists: list[int]
     degrees: int
+    name: str
 
 
 def parse_robot_telemetry(data: bytes) -> RobotTelemetry | None:
@@ -69,10 +70,13 @@ def parse_robot_telemetry(data: bytes) -> RobotTelemetry | None:
         return None
 
     unpacked = ROBOT_PACKET.unpack(data)
+    name_bytes = unpacked[93]
+    name_str = name_bytes.decode('utf-8', errors='ignore').rstrip('\x00')
     return RobotTelemetry(
         item_type=unpacked[0],
         dists=list(unpacked[1:92]),
         degrees=unpacked[92],
+        name=name_str,
     )
 
 
@@ -355,18 +359,18 @@ class RadarWidget(QWidget):
         self.item_type = 0
         self.dists = [0] * 91
         self.degrees = 0
-        # 第一个 IR 物品：Nolan (bit0)，第二个：Bryan (bit1)，第三个：Yanpei (bit2)
-        self.item_names = {1: "Nolan", 2: "Bryan", 4: "Yanpei"}
+        self.item_name = ""
 
     def set_vector(self, vx: float, vy: float):
         self.vx = vx
         self.vy = vy
         self.update()
 
-    def set_scan(self, item_type: int, dists: list[int], degrees: int):
+    def set_scan(self, item_type: int, dists: list[int], degrees: int, name: str = ""):
         self.item_type = item_type
         self.dists = list(dists[:91]) + [0] * max(0, 91 - len(dists))
         self.degrees = max(0, min(90, degrees))
+        self.item_name = name
         self.update()
 
     def _distance_to_radius(self, distance: int, radius: float) -> float:
@@ -463,14 +467,12 @@ class RadarWidget(QWidget):
         painter.drawText(QRect(rect.right() - 52, rect.bottom() - 26, 42, 20), Qt.AlignRight | Qt.AlignVCenter, "45")
 
     def _item_type_label(self) -> str:
-        if self.item_type == 0:
+        if self.item_name:
+            return self.item_name
+        elif self.item_type == 0:
             return "No Item"
-
-        labels = [name for bit, name in self.item_names.items() if self.item_type & bit]
-        if labels:
-            return "+".join(labels)
-
-        return f"Unknown {self.item_type}"
+        else:
+            return f"Unknown {self.item_type}"
 
 
 
@@ -792,12 +794,47 @@ class ControlWindow(QMainWindow):
         self.car_photo_card = PhotoCard(ASSET_CAR_IMAGE, "F1 Car Photo")
         layout.addWidget(self.car_photo_card)
 
-        ir_title = QLabel("IR Sensor 9")
-        ir_title.setObjectName("CaptionLabel")
-        layout.addWidget(ir_title)
+        ir_panel = QFrame()
+        ir_panel.setObjectName("Panel")
+        ir_panel.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+        ir_layout = QVBoxLayout(ir_panel)
+        ir_layout.setContentsMargins(26, 24, 26, 24)
+        ir_layout.setSpacing(16)
+
+        ir_title = QLabel("IR Sensor Detection")
+        ir_title.setObjectName("PanelTitle")
+        ir_layout.addWidget(ir_title)
+
+        self.ir_name_card = QFrame()
+        self.ir_name_card.setObjectName("SectionCard")
+        self.ir_name_card.setMinimumHeight(100)
+        ir_name_layout = QVBoxLayout(self.ir_name_card)
+        ir_name_layout.setContentsMargins(20, 16, 20, 16)
+        ir_name_layout.setSpacing(8)
+
+        ir_label = QLabel("Operater")
+        ir_label.setObjectName("CaptionLabel")
+        ir_name_layout.addWidget(ir_label)
+
+        self.ir_object_name = QLabel("No Detection")
+        self.ir_object_name.setObjectName("StatValue")
+        self.ir_object_name.setAlignment(Qt.AlignCenter)
+        font = self.ir_object_name.font()
+        font.setPointSize(28)
+        font.setBold(True)
+        self.ir_object_name.setFont(font)
+        ir_name_layout.addWidget(self.ir_object_name)
+
+        ir_layout.addWidget(self.ir_name_card)
+
+        ir_sensor_label = QLabel("Sensor Strip")
+        ir_sensor_label.setObjectName("CaptionLabel")
+        ir_layout.addWidget(ir_sensor_label)
 
         self.ir_strip = IRSensorStrip()
-        layout.addWidget(self.ir_strip)
+        ir_layout.addWidget(self.ir_strip)
+
+        layout.addWidget(ir_panel)
 
         keys_frame = QFrame()
         keys_frame.setObjectName("KeysFrame")
@@ -965,8 +1002,16 @@ class ControlWindow(QMainWindow):
 
     def _update_robot_telemetry(self, telemetry: RobotTelemetry):
         self.last_status_at = time.time()
-        self.radar.set_scan(telemetry.item_type, telemetry.dists, telemetry.degrees)
+        self.radar.set_scan(telemetry.item_type, telemetry.dists, telemetry.degrees, telemetry.name)
         self.ir_strip.set_values(self._decode_item_type_bits(telemetry.item_type))
+        display_name = telemetry.name.strip() if telemetry.name else "No Detection"
+        self.ir_object_name.setText(display_name if display_name else "No Detection")
+        if display_name and display_name != "No Detection":
+            self.ir_name_card.setProperty("accent", True)
+        else:
+            self.ir_name_card.setProperty("accent", False)
+        self.ir_name_card.style().unpolish(self.ir_name_card)
+        self.ir_name_card.style().polish(self.ir_name_card)
         self._refresh_status_badge()
 
     def _decode_item_type_bits(self, item_type: int):
