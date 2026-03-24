@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include <cstring>
+#include <Modulino_LED_Matrix.h>
 
 #include "imu_controller.hpp"
 #include "literals.hpp"
@@ -19,6 +20,71 @@ struct {
     float pitch_target_eq_rad = -0.13f;
 } constant;
 
+// Modulino LED matrix patterns (12x8)
+static ModulinoLEDMatrix led_matrix;
+static uint32_t matrix_frames[3][3];
+
+static void matrix_build_frames() {
+    // 12x8 点阵的字母图案（每行 12 bit）
+    static const uint16_t bitmap[3][8] = {
+        // Pattern A - 字母 A
+        {
+            0b001110000000,  // ...###....
+            0b010001000000,  // .#....#...
+            0b010001000000,  // .#....#...
+            0b011111000000,  // .#####....
+            0b010001000000,  // .#....#...
+            0b010001000000,  // .#....#...
+            0b010001000000,  // .#....#...
+            0b000000000000,  // ............
+        },
+        // Pattern B - 字母 B
+        {
+            0b011110000000,  // .####....
+            0b010001000000,  // .#...#...
+            0b010001000000,  // .#...#...
+            0b011110000000,  // .####....
+            0b010001000000,  // .#...#...
+            0b010001000000,  // .#...#...
+            0b011110000000,  // .####....
+            0b000000000000,  // ............
+        },
+        // Pattern C - 字母 C
+        {
+            0b001111000000,  // ..####...
+            0b010000000000,  // .#.......
+            0b010000000000,  // .#.......
+            0b010000000000,  // .#.......
+            0b010000000000,  // .#.......
+            0b010000000000,  // .#.......
+            0b001111000000,  // ..####...
+            0b000000000000,  // ............
+        }
+    };
+
+    for (uint8_t p = 0; p < 3; ++p) {
+        uint8_t pixels[96] = { 0 };
+        for (uint8_t y = 0; y < 8; ++y) {
+            for (uint8_t x = 0; x < 12; ++x) {
+                pixels[y * 12 + x] = (bitmap[p][y] >> (11 - x)) & 0x1;
+            }
+        }
+        ModulinoLEDMatrix::loadPixelsToBuffer(pixels, 96, matrix_frames[p]);
+    }
+}
+
+static void matrix_show(uint8_t pattern_index) {
+    if (pattern_index >= 3) {
+        return;
+    }
+    led_matrix.loadFrame(matrix_frames[pattern_index]);
+}
+
+static uint8_t matrix_selected = 0;
+static bool matrix_button_a_prev = false;
+static bool matrix_button_b_prev = false;
+static bool matrix_button_c_prev = false;
+
 static slave_to_master_iic_data_t s2m_data{};
 
 auto setup() -> void {
@@ -37,6 +103,14 @@ auto setup() -> void {
     { // init peripherals
         LOG_SECTION("INITIALIZING PERIPHERALS");
         peripherals::begin();
+
+        if (led_matrix.begin()) {
+            LOG_INFO("Modulino LED matrix initialized");
+            matrix_build_frames();
+            matrix_show(matrix_selected);
+        } else {
+            LOG_WARN("Modulino LED matrix not found");
+        }
     }
 
     { // init paras
@@ -293,6 +367,46 @@ auto setup() -> void {
             // motor_r.update_power(dt);
         },
         "Update Motor");
+        
+        scheduler.add(50, []() { // update motor velocity pid
+            static constexpr dura_t dt = 50ms;
+
+            // motor_l.set_target_avel(5rad_s);
+            // motor_r.set_target_avel(-5rad_s);
+
+            motor_l.calc_velocity(dt);
+            // motor_l.update_power(dt);
+            motor_r.calc_velocity(dt);
+            // motor_r.update_power(dt);
+        },
+        "Update Motor");
+
+        scheduler.add(50, []() { // Modulino ABC button -> LED matrix pattern
+            peripherals::buttons.update();
+            bool a = peripherals::buttons.isPressed('A') == HIGH;
+            bool b = peripherals::buttons.isPressed('B') == HIGH;
+            bool c = peripherals::buttons.isPressed('C') == HIGH;
+
+            if (a && !matrix_button_a_prev) {
+                matrix_selected = 0;
+                LOG_INFO("Matrix pattern <= A");
+            }
+            if (b && !matrix_button_b_prev) {
+                matrix_selected = 1;
+                LOG_INFO("Matrix pattern <= B");
+            }
+            if (c && !matrix_button_c_prev) {
+                matrix_selected = 2;
+                LOG_INFO("Matrix pattern <= C");
+            }
+
+            matrix_button_a_prev = a;
+            matrix_button_b_prev = b;
+            matrix_button_c_prev = c;
+
+            matrix_show(matrix_selected);
+        },
+        "Matrix Button Control");
 
         scheduler.reset();
     }

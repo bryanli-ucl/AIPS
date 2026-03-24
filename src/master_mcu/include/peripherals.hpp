@@ -60,11 +60,11 @@ extern slave_to_master_iic_data_t slave2master_data;
 struct {
 
     bool Modulino = true;
-    bool Buttons  = false;
+    bool Buttons  = true;  // enable abc button input
     bool Pixels   = false;
     bool Knob     = false;
     bool Movement = true;
-    bool Buzzer   = true;
+    bool Buzzer   = false;
     bool Slave    = true;
 
     bool IIC     = true;

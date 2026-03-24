@@ -33,6 +33,8 @@ auto begin() -> void {
                         LOG_FAIL();
                     else
                         LOG_DONE();
+                    buttons.update();
+                    LOG_INFO("Button status: A={} B={} C={}", buttons.isPressed('A'), buttons.isPressed('B'), buttons.isPressed('C'));
                 } else
                     LOG_SKIP();
             }
