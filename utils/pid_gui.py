@@ -19,8 +19,7 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt, QTimer
 
 
-# UDP_IP = "192.168.1.221"
-UDP_IP = "192.168.0.118"
+UDP_IP = "192.168.1.225"
 UDP_PORT = 9999
 
 

@@ -64,7 +64,7 @@ struct {
     bool Pixels   = false;
     bool Knob     = false;
     bool Movement = true;
-    bool Buzzer   = false;
+    bool Buzzer   = true;
     bool Slave    = true;
 
     bool IIC     = true;

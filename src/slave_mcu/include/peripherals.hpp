@@ -76,7 +76,7 @@ struct {
     bool MasterBoard = true;
 
     bool LiDAR = true;
-    bool IR    = false;
+    bool IR    = true;
     bool Servo = true;
 
     bool Modulino = false; // DO NOT OPEN !!!

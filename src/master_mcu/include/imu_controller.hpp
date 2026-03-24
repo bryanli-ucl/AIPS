@@ -24,20 +24,23 @@ class IMUController {
 
         m_imu.update();
 
-        { // yaw
-
+        {                                             // yaw
             float gyro = m_imu.getYaw() * DEG_TO_RAD; // rad/s
             m_state.yaw += gyro * dt.v;
         }
 
         { // pitch
+            float gyro = m_imu.getPitch() * DEG_TO_RAD;
 
-            float gyro         = m_imu.getPitch() * DEG_TO_RAD; // rad/s
-            float ax           = m_imu.getY();
-            float az           = m_imu.getZ();
-            float accel_ang    = -atan2f(ax, az); // rad
+            float ax    = m_imu.getY();
+            float az    = m_imu.getZ();
+            float accel = -atan2f(ax, az);
+
+            float alpha = 0.90f;
+
+            m_state.pitch = alpha * (m_state.pitch + gyro * dt.v) + (1 - alpha) * accel;
+
             m_state.pitch_gyro = gyro;
-            m_state.pitch      = m_pitch_kf.update(gyro, accel_ang, dt);
         }
 
         { // roll
