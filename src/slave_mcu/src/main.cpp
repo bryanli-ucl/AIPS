@@ -46,6 +46,7 @@ void setup() {
 
             memcpy(data.dists, dists, sizeof(dists));
             data.degrees = servo_angle;
+            memset(data.name, '\0', sizeof(data.name));
             strcpy(data.name, item_type_name);
 
             udp.beginPacket(udp.remoteIP(), udp.remotePort());
@@ -139,6 +140,7 @@ void setup() {
                 strcpy(item_type_name, "Bryan");
                 break;
             default:
+                strcpy(item_type_name, "None");
                 break;
             }
 
