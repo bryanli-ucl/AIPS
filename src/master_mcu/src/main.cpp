@@ -1,6 +1,6 @@
 #include <Arduino.h>
-#include <cstring>
 #include <Arduino_LED_Matrix.h>
+#include <cstring>
 
 #include "imu_controller.hpp"
 #include "literals.hpp"
@@ -36,8 +36,8 @@ static void matrix_build_frames() {
     for (int y = 0; y < 4; y++) {
         for (int x = 0; x < 4; x++) {
             int pixel_index = y * 12 + x;
-            int word_index = pixel_index / 32;
-            int bit_index = pixel_index % 32;
+            int word_index  = pixel_index / 32;
+            int bit_index   = pixel_index % 32;
             matrix_frames[0][word_index] |= (1UL << bit_index);
         }
     }
@@ -50,8 +50,8 @@ static void matrix_build_frames() {
     // 创建对角线
     for (int i = 0; i < 8; i++) {
         int pixel_index = i * 12 + i;
-        int word_index = pixel_index / 32;
-        int bit_index = pixel_index % 32;
+        int word_index  = pixel_index / 32;
+        int bit_index   = pixel_index % 32;
         if (word_index < 3) {
             matrix_frames[1][word_index] |= (1UL << bit_index);
         }
@@ -63,11 +63,11 @@ static void matrix_build_frames() {
     matrix_frames[2][2] = 0b00000000000000000000000000000000;
 
     // 在中心创建一个圆点
-    int center_x = 6;
-    int center_y = 4;
+    int center_x    = 6;
+    int center_y    = 4;
     int pixel_index = center_y * 12 + center_x;
-    int word_index = pixel_index / 32;
-    int bit_index = pixel_index % 32;
+    int word_index  = pixel_index / 32;
+    int bit_index   = pixel_index % 32;
     matrix_frames[2][word_index] |= (1UL << bit_index);
 }
 
@@ -79,12 +79,17 @@ static void matrix_show(uint8_t pattern_index) {
     led_matrix.renderFrame(0);
 }
 
-static uint8_t matrix_selected = 0;
+static uint8_t matrix_selected   = 0;
 static bool matrix_button_a_prev = false;
 static bool matrix_button_b_prev = false;
 static bool matrix_button_c_prev = false;
 
 static slave_to_master_iic_data_t s2m_data{};
+
+enum class State {
+    BALANCE = 1,
+    F1      = 2,
+} g_state;
 
 auto setup() -> void {
 
@@ -314,18 +319,22 @@ auto setup() -> void {
                 static float prev_target_pitch = 0;
                 // float target_pitch = bot_vel_pid.update(bot_vel, dt);
                 target_pitch = bot_vel_pid.update(bot_vel, dt);
-                float a = 0.1;
-                target_pitch       =  (1 - a) * prev_target_pitch + a * constrain(target_pitch, -5 * DEG_TO_RAD, 5 * DEG_TO_RAD);
+                float a      = 0.1;
+                target_pitch = (1 - a) * prev_target_pitch + a * constrain(target_pitch, -5 * DEG_TO_RAD, 5 * DEG_TO_RAD);
                 // target_pitch       = 0;
 
                 prev_target_pitch = target_pitch;
             }
             pitch_pid.set_target(target_pitch + constant.pitch_target_eq_rad);
-
         });
 
         scheduler.add(5, []() { // Main PID Controller
             static constexpr dura_t dt = 5ms;
+
+            if (g_state != State::BALANCE) {
+                return;
+            }
+
             // pitch pid
             // float target_avel = pitch_pid.update(-pitch_angle, dt, imu_ctrl.get_pitch_gyro_rad());
             float target_avel;
@@ -354,6 +363,30 @@ auto setup() -> void {
         },
         "Main PID");
 
+        scheduler.add(20, []() { // F1
+            if (g_state != State::F1) {
+                return;
+            }
+
+            // LOG_INFO("F1");
+
+            auto& data = s2m_data;
+
+            auto spd = -data.target_vel;
+            auto ang = data.target_yaw;
+
+            float forward = spd * cosf(ang);
+            float turn    = spd * sinf(ang);
+
+            float power_l = forward + turn;
+            float power_r = forward - turn;
+
+            motor_l.update_power_force(power_l);
+            motor_r.update_power_force(-power_r);
+
+        },
+        "F1");
+
         scheduler.add(50, []() { // update motor velocity pid
             static constexpr dura_t dt = 50ms;
 
@@ -373,16 +406,18 @@ auto setup() -> void {
             bool b = peripherals::buttons.isPressed('B') == HIGH;
             bool c = peripherals::buttons.isPressed('C') == HIGH;
 
-            LOG_INFO("Button status: A={} B={} C={}", buttons.isPressed('A'), buttons.isPressed('B'), buttons.isPressed('C'));
+            LOG_TRACE("Button status: A={} B={} C={}", buttons.isPressed('A'), buttons.isPressed('B'), buttons.isPressed('C'));
 
             if (a && !matrix_button_a_prev) {
                 matrix_selected = 0;
                 LOG_INFO("Matrix pattern <= A");
+                g_state = State::BALANCE;
                 buttons.setLeds(1, 0, 0);
             }
             if (b && !matrix_button_b_prev) {
                 matrix_selected = 1;
                 LOG_INFO("Matrix pattern <= B");
+                g_state = State::F1;
                 buttons.setLeds(0, 1, 0);
             }
             if (c && !matrix_button_c_prev) {

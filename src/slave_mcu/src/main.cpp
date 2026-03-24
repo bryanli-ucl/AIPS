@@ -15,6 +15,7 @@ static int8_t servo_angle{};
 static float target_yaw{};
 static float target_speed{};
 static uint16_t item_type{};
+static char item_type_name[20]{};
 
 void setup() {
 
@@ -45,6 +46,7 @@ void setup() {
 
             memcpy(data.dists, dists, sizeof(dists));
             data.degrees = servo_angle;
+            strcpy(data.name, item_type_name);
 
             udp.beginPacket(udp.remoteIP(), udp.remotePort());
             udp.write((uint8_t*)&data, sizeof(data));
@@ -83,9 +85,9 @@ void setup() {
             target_speed = module_vec(data.target_vel);
             target_yaw   = atan2(data.target_vel.x, data.target_vel.y);
 
-            LOG_INFO("Received Contents: {}, {}", data.target_vel.x, data.target_vel.y);
+            LOG_TRACE("Received Contents: {}, {}", data.target_vel.x, data.target_vel.y);
             if (module_vec_sq(data.target_vel)) {
-                LOG_INFO("Received Contents: {}, {}", data.target_vel.x, data.target_vel.y);
+                LOG_TRACE("Received Contents: {}, {}", data.target_vel.x, data.target_vel.y);
                 buzzer.tone(440, 20);
             }
 
@@ -98,19 +100,49 @@ void setup() {
             static std::array<uint16_t, IR_CONUT> sensor_values;
             qtr.read(sensor_values.data(), QTRReadMode::On);
 
+            // for (auto& x : sensor_values) {
+            //     Serial.print(x);
+            //     Serial.print(' ');
+            // }
+            // Serial.println();
+
             for (auto& x : sensor_values) {
-                if (x > 150)
+                if (x > 250)
                     x = 1;
                 else
                     x = 0;
             }
 
-
             item_type = 0;
             for (int i = 0; i < sensor_values.size(); i++) {
                 item_type |= sensor_values[i] << i;
             }
-            LOG_TRACE("{b}", item_type);
+            LOG_INFO("{b}", item_type);
+
+            switch (item_type) {
+            case 0b000000001:
+            case 0b000000011:
+            case 0b000000111:
+            case 0b000000110:
+                strcpy(item_type_name, "Yan Pei");
+                break;
+            case 0b100000001:
+            case 0b100000011:
+            case 0b110000001:
+            case 0b110000011:
+                strcpy(item_type_name, "Nolan");
+                break;
+            case 0b100000000:
+            case 0b110000000:
+            case 0b010000000:
+            case 0b111000000:
+                strcpy(item_type_name, "Bryan");
+                break;
+            default:
+                break;
+            }
+
+            LOG_DEBUG("{}", item_type_name);
 
             // Prepare Data for Master requests
             auto& data = iic_commu::slave2master_data;
@@ -160,7 +192,7 @@ void setup() {
                 d.drawStr(2, 14, buf);
 
                 memset(buf, '\0', sizeof(buf));
-                sprintf(buf, "ITEM: %d", item_type);
+                sprintf(buf, "ITEM: %s", item_type_name);
                 d.drawStr(2, 30, buf);
 
                 memset(buf, '\0', sizeof(buf));
@@ -239,7 +271,7 @@ void setup() {
         scheduler.add(6, []() { // LiDAR
             static int8_t sign{ 1 };
 
-            tfl.Set_Trigger(iic_addrs::LiDAR);
+            // tfl.Set_Trigger(iic_addrs::LiDAR);
 
             // data reading
             int16_t val;

@@ -47,6 +47,7 @@ struct robot_to_PC_wifi_data_t {
     uint16_t item_type;
     int8_t dists[91];
     int8_t degrees;
+    char name[20];
 };
 
 struct PC_to_robot_wifi_data_t {
