@@ -27,7 +27,7 @@ from PySide6.QtWidgets import (
 )
 
 
-MCU_IP = "192.168.0.250"
+MCU_IP = "172.20.10.3"
 MCU_PORT = 9999
 SEND_INTERVAL = 0.1
 MAX_SPEED = 500.0
@@ -355,6 +355,8 @@ class RadarWidget(QWidget):
         self.item_type = 0
         self.dists = [0] * 91
         self.degrees = 0
+        # 第一个 IR 物品：Nolan (bit0)，第二个：Bryan (bit1)，第三个：Yanpei (bit2)
+        self.item_names = {1: "Nolan", 2: "Bryan", 4: "Yanpei"}
 
     def set_vector(self, vx: float, vy: float):
         self.vx = vx
@@ -448,7 +450,8 @@ class RadarWidget(QWidget):
         painter.drawEllipse(dot, 6, 6)
 
         painter.setPen(QColor("#F6F7FB"))
-        painter.drawText(QRect(rect.x() + 14, rect.y() + 10, 180, 24), Qt.AlignLeft | Qt.AlignVCenter, f"ITEM {self.item_type}")
+        item_name = self._item_type_label()
+        painter.drawText(QRect(rect.x() + 14, rect.y() + 10, 180, 24), Qt.AlignLeft | Qt.AlignVCenter, item_name)
         painter.setPen(QColor("#8E97AB"))
         painter.drawText(
             QRect(rect.x() + 14, rect.y() + 32, 220, 20),
@@ -458,6 +461,17 @@ class RadarWidget(QWidget):
         painter.drawText(QRect(rect.x() + 10, rect.bottom() - 26, 60, 20), Qt.AlignLeft | Qt.AlignVCenter, "-45")
         painter.drawText(QRect(int(center.x() - 14), rect.y() + 6, 28, 20), Qt.AlignCenter, "0")
         painter.drawText(QRect(rect.right() - 52, rect.bottom() - 26, 42, 20), Qt.AlignRight | Qt.AlignVCenter, "45")
+
+    def _item_type_label(self) -> str:
+        if self.item_type == 0:
+            return "No Item"
+
+        labels = [name for bit, name in self.item_names.items() if self.item_type & bit]
+        if labels:
+            return "+".join(labels)
+
+        return f"Unknown {self.item_type}"
+
 
 
 class KeyTile(QFrame):
