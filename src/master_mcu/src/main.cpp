@@ -56,6 +56,7 @@ auto setup() -> void {
         motor_l.set_target_avel(0rad_s);
         motor_l.set_power_constrain(400);
         motor_l.set_dead_zone(20);
+        motor_l.set_dead_zone(0);
 
         motor_r.reset();
         motor_r.set_paras({ 30.f, 20.f, 0.f });
@@ -63,6 +64,7 @@ auto setup() -> void {
         motor_r.set_target_avel(0rad_s);
         motor_r.set_power_constrain(400);
         motor_r.set_dead_zone(20);
+        motor_r.set_dead_zone(0);
 
         LOG_INFO("Yaw PID");
         yaw_pid.reset();
@@ -176,6 +178,7 @@ auto setup() -> void {
             switch (pkt->pid_id) {
             case 0:
                 update_pid(pitch_pid);
+                constant.pitch_target_eq_rad = target;
                 break;
 
             case 1:
@@ -226,19 +229,28 @@ auto setup() -> void {
         },
         "Update IMU");
 
-
-        scheduler.add(5, []() { // Main PID Controller
-            static constexpr dura_t dt = 5ms;
+        scheduler.add(200, []() {
+            static constexpr dura_t dt = 200ms;
 
             // bot vel pid
             float bot_vel = (motor_r.get_avel().v - motor_l.get_avel().v) * 0.5f;
+            float target_pitch;
+            {
+                static float prev_target_pitch = 0;
+                // float target_pitch = bot_vel_pid.update(bot_vel, dt);
+                target_pitch = bot_vel_pid.update(bot_vel, dt);
+                float a = 0.1;
+                target_pitch       =  (1 - a) * prev_target_pitch + a * constrain(target_pitch, -5 * DEG_TO_RAD, 5 * DEG_TO_RAD);
+                // target_pitch       = 0;
 
-            // float target_pitch = bot_vel_pid.update(bot_vel, dt);
-            float target_pitch = bot_vel_pid.update(bot_vel, dt);
-            target_pitch       = constrain(target_pitch, -5 * DEG_TO_RAD, 5 * DEG_TO_RAD);
-            // target_pitch       = 0;
+                prev_target_pitch = target_pitch;
+            }
             pitch_pid.set_target(target_pitch + constant.pitch_target_eq_rad);
 
+        });
+
+        scheduler.add(5, []() { // Main PID Controller
+            static constexpr dura_t dt = 5ms;
             // pitch pid
             // float target_avel = pitch_pid.update(-pitch_angle, dt, imu_ctrl.get_pitch_gyro_rad());
             float target_avel;
@@ -257,11 +269,11 @@ auto setup() -> void {
 
             // mix velocity and rotation
             yaw_corr = 0;
-            motor_l.set_target_avel(avel_t((target_avel - atanf(yaw_corr) * (1 / TWO_PI))));
-            motor_r.set_target_avel(-avel_t((target_avel + atanf(yaw_corr) * (1 / TWO_PI))));
+            // motor_l.set_target_avel(avel_t((target_avel - atanf(yaw_corr) * (1 / TWO_PI))));
+            // motor_r.set_target_avel(-avel_t((target_avel + atanf(yaw_corr) * (1 / TWO_PI))));
 
-            // motor_l.update_power_force(30 * ((target_avel - atanf(yaw_corr) * (1 / TWO_PI))));
-            // motor_r.update_power_force(-30 * ((target_avel + atanf(yaw_corr) * (1 / TWO_PI))));
+            motor_l.update_power_force(30 * ((target_avel - atanf(yaw_corr) * (1 / TWO_PI))));
+            motor_r.update_power_force(-30 * ((target_avel + atanf(yaw_corr) * (1 / TWO_PI))));
 
         },
         "Main PID");
@@ -273,9 +285,9 @@ auto setup() -> void {
             // motor_r.set_target_avel(-5rad_s);
 
             motor_l.calc_velocity(dt);
-            motor_l.update_power(dt);
+            // motor_l.update_power(dt);
             motor_r.calc_velocity(dt);
-            motor_r.update_power(dt);
+            // motor_r.update_power(dt);
         },
         "Update Motor");
 

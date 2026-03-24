@@ -67,7 +67,7 @@ void setup() {
             target_yaw   = atan2(data.target_vel.x, data.target_vel.y);
 
             if (module_vec_sq(data.target_vel)) {
-                LOG_INFO("Received Contents: {}, {}", data.target_vel.x, data.target_vel.y);
+                LOG_TRACE("Received Contents: {}, {}", data.target_vel.x, data.target_vel.y);
                 buzzer.tone(440, 20);
             }
         },
