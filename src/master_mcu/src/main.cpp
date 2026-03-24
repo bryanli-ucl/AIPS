@@ -25,63 +25,50 @@ static ArduinoLEDMatrix led_matrix;
 static uint32_t matrix_frames[3][3];
 
 static void matrix_build_frames() {
-    // 12x8 点阵的字母图案（每行 12 bit）
-    static const uint16_t bitmap[3][8] = {
-        // Pattern A - 字母 A
-        {
-            0b001110000000,  // ...###....
-            0b010001000000,  // .#....#...
-            0b010001000000,  // .#....#...
-            0b011111000000,  // .#####....
-            0b010001000000,  // .#....#...
-            0b010001000000,  // .#....#...
-            0b010001000000,  // .#....#...
-            0b000000000000,  // ............
-        },
-        // Pattern B - 字母 B
-        {
-            0b011110000000,  // .####....
-            0b010001000000,  // .#...#...
-            0b010001000000,  // .#...#...
-            0b011110000000,  // .####....
-            0b010001000000,  // .#...#...
-            0b010001000000,  // .#...#...
-            0b011110000000,  // .####....
-            0b000000000000,  // ............
-        },
-        // Pattern C - 字母 C
-        {
-            0b001111000000,  // ..####...
-            0b010000000000,  // .#.......
-            0b010000000000,  // .#.......
-            0b010000000000,  // .#.......
-            0b010000000000,  // .#.......
-            0b010000000000,  // .#.......
-            0b001111000000,  // ..####...
-            0b000000000000,  // ............
-        }
-    };
+    // 使用简单的测试图案来验证显示功能
 
-    for (uint8_t p = 0; p < 3; ++p) {
-        uint8_t pixels[96] = { 0 };
-        for (uint8_t y = 0; y < 8; ++y) {
-            for (uint8_t x = 0; x < 12; ++x) {
-                pixels[y * 12 + x] = (bitmap[p][y] >> (11 - x)) & 0x1;
-            }
+    // Pattern A - 简单的方块
+    matrix_frames[0][0] = 0b00000000000000000000000000000000;
+    matrix_frames[0][1] = 0b00000000000000000000000000000000;
+    matrix_frames[0][2] = 0b00000000000000000000000000000000;
+
+    // 创建一个 4x4 的方块在左上角
+    for (int y = 0; y < 4; y++) {
+        for (int x = 0; x < 4; x++) {
+            int pixel_index = y * 12 + x;
+            int word_index = pixel_index / 32;
+            int bit_index = pixel_index % 32;
+            matrix_frames[0][word_index] |= (1UL << bit_index);
         }
-        // Convert to ArduinoLEDMatrix format (3 uint32_t values)
-        uint32_t frame[3] = { 0, 0, 0 };
-        for (uint8_t i = 0; i < 96; ++i) {
-            if (pixels[i]) {
-                uint8_t bit_pos = i % 32;
-                uint8_t word_idx = i / 32;
-                frame[word_idx] |= (1UL << bit_pos);
-            }
-        }
-        matrix_frames[p][0] = frame[0];
-        matrix_frames[p][1] = frame[1];
-        matrix_frames[p][2] = frame[2];
     }
+
+    // Pattern B - 简单的对角线
+    matrix_frames[1][0] = 0b00000000000000000000000000000000;
+    matrix_frames[1][1] = 0b00000000000000000000000000000000;
+    matrix_frames[1][2] = 0b00000000000000000000000000000000;
+
+    // 创建对角线
+    for (int i = 0; i < 8; i++) {
+        int pixel_index = i * 12 + i;
+        int word_index = pixel_index / 32;
+        int bit_index = pixel_index % 32;
+        if (word_index < 3) {
+            matrix_frames[1][word_index] |= (1UL << bit_index);
+        }
+    }
+
+    // Pattern C - 简单的圆点
+    matrix_frames[2][0] = 0b00000000000000000000000000000000;
+    matrix_frames[2][1] = 0b00000000000000000000000000000000;
+    matrix_frames[2][2] = 0b00000000000000000000000000000000;
+
+    // 在中心创建一个圆点
+    int center_x = 6;
+    int center_y = 4;
+    int pixel_index = center_y * 12 + center_x;
+    int word_index = pixel_index / 32;
+    int bit_index = pixel_index % 32;
+    matrix_frames[2][word_index] |= (1UL << bit_index);
 }
 
 static void matrix_show(uint8_t pattern_index) {
