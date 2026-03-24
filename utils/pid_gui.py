@@ -19,7 +19,7 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt, QTimer
 
 
-UDP_IP = "192.168.1.225"
+UDP_IP = "192.168.0.118"
 UDP_PORT = 9999
 
 
@@ -46,19 +46,23 @@ class PIDWidget(QWidget):
         self.kp = QDoubleSpinBox()
         self.kp.setRange(0, 500)
         self.kp.valueChanged.connect(self.send)
+        self.kp.setDecimals(7)
 
         self.ki = QDoubleSpinBox()
         self.ki.setRange(0, 500)
         self.ki.valueChanged.connect(self.send)
+        self.ki.setDecimals(7)
 
         self.kd = QDoubleSpinBox()
         self.kd.setRange(0, 500)
         self.kd.valueChanged.connect(self.send)
+        self.kd.setDecimals(7)
 
         self.target = QDoubleSpinBox()
         self.target.setRange(-1000, 1000)
         self.target.valueChanged.connect(self.send)
-
+        self.target.setDecimals(7)
+        
         layout.addWidget(QLabel(PID_NAMES[pid_id]), 0, 0)
 
         layout.addWidget(QLabel("Target"), 1, 0)

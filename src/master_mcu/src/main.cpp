@@ -16,7 +16,7 @@ PID_Controller bot_vel_pid;
 TaskScheduler scheduler;
 
 struct {
-    float pitch_target_eq_rad = -0.13f;
+    float pitch_target_eq_rad = -0.005f;
 } constant;
 
 static slave_to_master_iic_data_t s2m_data{};
@@ -45,7 +45,7 @@ auto setup() -> void {
         LOG_INFO("Pitch PID");
 
         pitch_pid.reset();
-        pitch_pid.set_paras({ 45.f, 0.0f, 0.5f });
+        pitch_pid.set_paras({ 210.f, 0.0f, 3.f });
         pitch_pid.set_target(constant.pitch_target_eq_rad);
         pitch_pid.set_integral_limit(300);
 
@@ -71,7 +71,7 @@ auto setup() -> void {
 
         LOG_INFO("Bot Vel PID");
         bot_vel_pid.reset();
-        bot_vel_pid.set_paras({ .0f, 0.f, 0.f });
+        bot_vel_pid.set_paras({ .00002f, 0.00000001f, 0.000001f });
         bot_vel_pid.set_target(0);
     }
 
@@ -140,7 +140,7 @@ auto setup() -> void {
         },
         "Print Stats");
 
-        scheduler.add(1000, []() { // UDP
+        scheduler.add(100, []() { // UDP
             struct udp_pid_packet_t {
                 uint8_t pid_id;
                 float target;
@@ -241,8 +241,8 @@ auto setup() -> void {
                 float pitch_angle = imu_ctrl.get_pitch_rad();
                 float pitch_gyro  = imu_ctrl.get_pitch_gyro_rad();
                 auto [kp, ki, kd] = pitch_pid.get_paras();
-                auto err          = pitch_pid.get_target() - (-pitch_angle);
-                auto err_gyro     = pitch_pid.get_target() - (-pitch_gyro);
+                auto err          = pitch_pid.get_target() - (pitch_angle);
+                auto err_gyro     = pitch_pid.get_target() - (pitch_gyro);
                 target_avel       = kp * err - kd * err_gyro;
             }
             LOG_TRACE("Target Vel: {}, pitch_angle: {}", target_avel, imu_ctrl.get_pitch_rad());

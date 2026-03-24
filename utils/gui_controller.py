@@ -6,7 +6,7 @@ import struct
 import tkinter as tk
 from tkinter import font as tkfont
 
-MCU_IP = "172.20.10.6"
+MCU_IP = "192.168.1.230"
 MCU_PORT = 9999
 SEND_INTERVAL = 0.1  # 20Hz
 
