@@ -71,11 +71,11 @@ struct {
 
     bool IIC      = true;
     bool OLED1306 = true;
+    bool LiDAR    = true;
 
     bool IIC1        = true;
     bool MasterBoard = true;
 
-    bool LiDAR = true;
     bool IR    = true;
     bool Servo = true;
 

@@ -4,10 +4,30 @@ import struct
 import sys
 import threading
 import time
+from dataclasses import dataclass
 from pathlib import Path
 from select import select
 
-MCU_IP = "192.168.1.230"
+from PySide6.QtCore import QObject, QPointF, QRect, Qt, QTimer, Signal
+from PySide6.QtGui import QColor, QLinearGradient, QPainter, QPainterPath, QPen, QPixmap
+from PySide6.QtWidgets import (
+    QApplication,
+    QFrame,
+    QGridLayout,
+    QHBoxLayout,
+    QLabel,
+    QMainWindow,
+    QPushButton,
+    QPlainTextEdit,
+    QScrollArea,
+    QSizePolicy,
+    QSlider,
+    QVBoxLayout,
+    QWidget,
+)
+
+
+MCU_IP = "192.168.0.250"
 MCU_PORT = 9999
 SEND_INTERVAL = 0.1
 MAX_SPEED = 500.0
@@ -34,6 +54,27 @@ KEY_VECTORS = {
     "d": (1.0, 0.0),
 }
 
+ROBOT_PACKET = struct.Struct("<H91bb")
+
+
+@dataclass(slots=True)
+class RobotTelemetry:
+    item_type: int
+    dists: list[int]
+    degrees: int
+
+
+def parse_robot_telemetry(data: bytes) -> RobotTelemetry | None:
+    if len(data) != ROBOT_PACKET.size:
+        return None
+
+    unpacked = ROBOT_PACKET.unpack(data)
+    return RobotTelemetry(
+        item_type=unpacked[0],
+        dists=list(unpacked[1:92]),
+        degrees=unpacked[92],
+    )
+
 
 def compute_vector():
     with pressed_lock:
@@ -54,6 +95,7 @@ def compute_vector():
 
 class SignalBus(QObject):
     status_changed = Signal(float, float, bytes)
+    telemetry_received = Signal(object)
     log_received = Signal(str)
 
 
@@ -72,6 +114,10 @@ def receive_loop(signals: SignalBus, state: ControlState):
                 continue
 
             data, addr = sock.recvfrom(1024)
+            telemetry = parse_robot_telemetry(data)
+            if telemetry is not None:
+                signals.telemetry_received.emit(telemetry)
+                continue
             try:
                 text = data.decode(errors="strict")
                 if text != "OK":
@@ -306,20 +352,33 @@ class RadarWidget(QWidget):
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
         self.vx = 0.0
         self.vy = 0.0
-        self.sweep_angle = 0.0
-
-        self.sweep_timer = QTimer(self)
-        self.sweep_timer.timeout.connect(self._advance_sweep)
-        self.sweep_timer.start(35)
-
-    def _advance_sweep(self):
-        self.sweep_angle = (self.sweep_angle + 4.0) % 360.0
-        self.update()
+        self.item_type = 0
+        self.dists = [0] * 91
+        self.degrees = 0
 
     def set_vector(self, vx: float, vy: float):
         self.vx = vx
         self.vy = vy
         self.update()
+
+    def set_scan(self, item_type: int, dists: list[int], degrees: int):
+        self.item_type = item_type
+        self.dists = list(dists[:91]) + [0] * max(0, 91 - len(dists))
+        self.degrees = max(0, min(90, degrees))
+        self.update()
+
+    def _distance_to_radius(self, distance: int, radius: float) -> float:
+        if distance <= 0:
+            return radius * 0.05
+        scaled = math.log2(max(distance, 1)) * 6.0 - 6.0
+        return max(radius * 0.08, min(radius, scaled / 55.0 * radius))
+
+    def _fan_point(self, center: QPointF, radius: float, degrees: float) -> QPointF:
+        radians = math.radians(degrees)
+        return QPointF(
+            center.x() + math.sin(radians) * radius,
+            center.y() - math.cos(radians) * radius,
+        )
 
     def paintEvent(self, event):
         painter = QPainter(self)
@@ -330,34 +389,75 @@ class RadarWidget(QWidget):
         panel.addRoundedRect(rect, 18, 18)
         painter.fillPath(panel, QColor("#121522"))
 
-        center = rect.center()
-        radius = min(rect.width(), rect.height()) / 2 - 36
+        center = QPointF(rect.center().x(), rect.bottom() - 20)
+        radius = min(rect.width() * 0.48, rect.height() - 54)
+        fan_rect = QRect(
+            int(center.x() - radius),
+            int(center.y() - radius),
+            int(radius * 2),
+            int(radius * 2),
+        )
 
         painter.setPen(QPen(QColor("#25304A"), 1))
-        painter.drawEllipse(center, radius, radius)
-        painter.drawEllipse(center, radius * 0.66, radius * 0.66)
-        painter.drawEllipse(center, radius * 0.33, radius * 0.33)
-        painter.drawLine(QPointF(center.x() - radius, center.y()), QPointF(center.x() + radius, center.y()))
-        painter.drawLine(QPointF(center.x(), center.y() - radius), QPointF(center.x(), center.y() + radius))
+        for ring_factor in (1.0, 0.66, 0.33):
+            ring_radius = radius * ring_factor
+            ring_rect = QRect(
+                int(center.x() - ring_radius),
+                int(center.y() - ring_radius),
+                int(ring_radius * 2),
+                int(ring_radius * 2),
+            )
+            painter.drawArc(ring_rect, 45 * 16, 90 * 16)
 
-        sweep_length = radius
-        sweep_radians = math.radians(self.sweep_angle)
-        sweep_end = QPointF(
-            center.x() + math.cos(sweep_radians) * sweep_length,
-            center.y() - math.sin(sweep_radians) * sweep_length,
-        )
+        left_edge = self._fan_point(center, radius, -45)
+        right_edge = self._fan_point(center, radius, 45)
+        painter.drawLine(center, left_edge)
+        painter.drawLine(center, right_edge)
+        painter.drawLine(left_edge, right_edge)
+
+        painter.setPen(QPen(QColor("#2F3B58"), 1))
+        for guide_angle in (-45, -22.5, 0, 22.5, 45):
+            painter.drawLine(center, self._fan_point(center, radius, guide_angle))
+
+        sweep_angle = self.degrees - 45
+        sweep_end = self._fan_point(center, radius, sweep_angle)
         painter.setPen(QPen(QColor(255, 45, 45, 170), 3))
         painter.drawLine(center, sweep_end)
+
+        point_pen = QPen(QColor("#FF9A3D"), 2)
+        painter.setPen(point_pen)
+        for degree, distance in enumerate(self.dists):
+            if distance <= 0:
+                continue
+            point_radius = self._distance_to_radius(distance, radius)
+            point = self._fan_point(center, point_radius, degree - 45)
+            painter.drawPoint(point)
+
+        servo_end = self._fan_point(center, radius, self.degrees - 45)
+        painter.setPen(QPen(QColor(255, 255, 255, 80), 1, Qt.DashLine))
+        painter.drawLine(center, servo_end)
 
         normalized_x = self.vx / max(MAX_SPEED, 1.0)
         normalized_y = self.vy / max(MAX_SPEED, 1.0)
         dot = QPointF(
-            center.x() + normalized_x * radius * 0.8,
-            center.y() - normalized_y * radius * 0.8,
+            center.x() + normalized_x * radius * 0.45,
+            center.y() - max(0.0, normalized_y) * radius * 0.45,
         )
         painter.setPen(Qt.NoPen)
         painter.setBrush(QColor("#FF2D2D"))
         painter.drawEllipse(dot, 6, 6)
+
+        painter.setPen(QColor("#F6F7FB"))
+        painter.drawText(QRect(rect.x() + 14, rect.y() + 10, 180, 24), Qt.AlignLeft | Qt.AlignVCenter, f"ITEM {self.item_type}")
+        painter.setPen(QColor("#8E97AB"))
+        painter.drawText(
+            QRect(rect.x() + 14, rect.y() + 32, 220, 20),
+            Qt.AlignLeft | Qt.AlignVCenter,
+            f"mask {self.item_type:09b}   servo {self.degrees:02d} deg",
+        )
+        painter.drawText(QRect(rect.x() + 10, rect.bottom() - 26, 60, 20), Qt.AlignLeft | Qt.AlignVCenter, "-45")
+        painter.drawText(QRect(int(center.x() - 14), rect.y() + 6, 28, 20), Qt.AlignCenter, "0")
+        painter.drawText(QRect(rect.right() - 52, rect.bottom() - 26, 42, 20), Qt.AlignRight | Qt.AlignVCenter, "45")
 
 
 class KeyTile(QFrame):
@@ -785,6 +885,7 @@ class ControlWindow(QMainWindow):
 
     def _connect_signals(self):
         self.signals.status_changed.connect(self._update_status)
+        self.signals.telemetry_received.connect(self._update_robot_telemetry)
         self.signals.log_received.connect(self._append_log)
 
     def _start_threads(self):
@@ -846,22 +947,16 @@ class ControlWindow(QMainWindow):
         self.hex_label.setText(f"Payload  {hex_payload[:8]} {hex_payload[8:]}")
         self.telemetry.set_vector(vx, vy)
         self.radar.set_vector(vx, vy)
-        self.ir_strip.set_values(self._build_ir_values(vx, vy))
         self._refresh_status_badge()
 
-    def _build_ir_values(self, vx: float, vy: float):
-        speed_ratio = min(1.0, math.hypot(vx, vy) / max(MAX_SPEED, 1.0))
-        position = (vx / max(MAX_SPEED, 1.0)) * 4.0
-        values = []
-        for index in range(9):
-            distance = abs(index - 4 - position)
-            intensity = max(0.0, 1.0 - distance / 2.0) * (0.25 + speed_ratio * 0.75)
-            if vy > 0:
-                intensity *= 1.0
-            elif vy < 0:
-                intensity *= 0.8
-            values.append(intensity)
-        return values
+    def _update_robot_telemetry(self, telemetry: RobotTelemetry):
+        self.last_status_at = time.time()
+        self.radar.set_scan(telemetry.item_type, telemetry.dists, telemetry.degrees)
+        self.ir_strip.set_values(self._decode_item_type_bits(telemetry.item_type))
+        self._refresh_status_badge()
+
+    def _decode_item_type_bits(self, item_type: int):
+        return [1.0 if (item_type >> index) & 0x1 else 0.0 for index in range(9)]
 
     def _toggle_pause(self, checked: bool):
         with self.state.pause_lock:

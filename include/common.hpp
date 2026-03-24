@@ -44,6 +44,9 @@ struct slave_to_master_iic_data_t {
 };
 
 struct robot_to_PC_wifi_data_t {
+    uint16_t item_type;
+    int8_t dists[91];
+    int8_t degrees;
 };
 
 struct PC_to_robot_wifi_data_t {
