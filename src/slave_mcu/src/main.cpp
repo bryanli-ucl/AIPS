@@ -87,6 +87,9 @@ void setup() {
             if (module_vec_sq(data.target_vel)) {
                 buzzer.tone(440, 20);
             }
+
+            iic_commu::slave2master_data.target_vel = target_speed;
+            iic_commu::slave2master_data.target_yaw = target_yaw;
         },
         "Process UDP");
 
@@ -133,9 +136,10 @@ void setup() {
             else
                 data.is_new_data = false;
 
-            LOG_INFO("DATA.value1: {}", data.value1);
-            LOG_INFO("DATA.value2: {}", data.value2);
-            LOG_INFO("DATA.value3: {}", data.value3);
+            // LOG_INFO("DATA.value1: {}", data.value1);
+            // LOG_INFO("DATA.value2: {}", data.value2);
+            // LOG_INFO("DATA.value3: {}", data.value3);
+
 
         },
         "Process IIC");
