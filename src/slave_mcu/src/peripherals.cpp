@@ -79,7 +79,7 @@ auto begin() -> void {
     { // LiDAR
         LOG_INFO_START("Initializing LiDAR");
         if constexpr (initializing_list.LiDAR && initializing_list.IIC) {
-            if (tfl.Soft_Reset(iic_addrs::LiDAR)) {
+            if (tfl.Hard_Reset(iic_addrs::LiDAR)) {
                 tfl.Set_Trig_Mode(iic_addrs::LiDAR);
                 LOG_DONE();
             } else {
