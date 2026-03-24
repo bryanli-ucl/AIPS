@@ -83,9 +83,9 @@ void setup() {
             target_speed = module_vec(data.target_vel);
             target_yaw   = atan2(data.target_vel.x, data.target_vel.y);
 
-            LOG_INFO("Received Contents: {}, {}", data.target_vel.x, data.target_vel.y);
+            LOG_TRACE("Received Contents: {}, {}", data.target_vel.x, data.target_vel.y);
             if (module_vec_sq(data.target_vel)) {
-                LOG_INFO("Received Contents: {}, {}", data.target_vel.x, data.target_vel.y);
+                LOG_TRACE("Received Contents: {}, {}", data.target_vel.x, data.target_vel.y);
                 buzzer.tone(440, 20);
             }
 
@@ -99,12 +99,17 @@ void setup() {
             qtr.read(sensor_values.data(), QTRReadMode::On);
 
             for (auto& x : sensor_values) {
-                if (x > 150)
+                Serial.print(x);
+                Serial.print(' ');
+            }
+            Serial.println();
+
+            for (auto& x : sensor_values) {
+                if (x > 250)
                     x = 1;
                 else
                     x = 0;
             }
-
 
             item_type = 0;
             for (int i = 0; i < sensor_values.size(); i++) {
