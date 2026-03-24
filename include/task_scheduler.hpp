@@ -6,7 +6,7 @@
 
 class TaskScheduler {
     public:
-    static constexpr uint8_t MAX_TASKS = 8;
+    static constexpr uint8_t MAX_TASKS = 10;
 
     using TaskFn = std::function<void()>;
 
