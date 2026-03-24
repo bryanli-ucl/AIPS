@@ -44,22 +44,26 @@ class PIDWidget(QWidget):
         layout = QGridLayout()
 
         self.kp = QDoubleSpinBox()
-        self.kp.setRange(0, 500)
+        self.kp.setRange(-550, 500)
+        self.kp.setDecimals(7)
         self.kp.valueChanged.connect(self.send)
         self.kp.setDecimals(7)
 
         self.ki = QDoubleSpinBox()
-        self.ki.setRange(0, 500)
+        self.ki.setRange(-550, 500)
+        self.ki.setDecimals(7)
         self.ki.valueChanged.connect(self.send)
         self.ki.setDecimals(7)
 
         self.kd = QDoubleSpinBox()
-        self.kd.setRange(0, 500)
+        self.kd.setRange(-550, 500)
+        self.kd.setDecimals(7)
         self.kd.valueChanged.connect(self.send)
         self.kd.setDecimals(7)
 
         self.target = QDoubleSpinBox()
         self.target.setRange(-1000, 1000)
+        self.target.setDecimals(7)
         self.target.valueChanged.connect(self.send)
         self.target.setDecimals(7)
         

@@ -9,12 +9,11 @@ using namespace ::literals;
 
 TaskScheduler scheduler{};
 
-static int8_t dists[91]{};
-static int8_t servo_angle{};
+static int16_t dists[91]{};
+static int16_t servo_angle{};
 
 static float target_yaw{};
 static float target_speed{};
-static uint16_t item_type{};
 
 void setup() {
 
@@ -38,29 +37,13 @@ void setup() {
 
     { // Scheuler Tasks
 
-        scheduler.add(500, []() { // send to pc
-            robot_to_PC_wifi_data_t data;
-
-            data.item_type = item_type;
-
-            memcpy(data.dists, dists, sizeof(dists));
-            data.degrees = servo_angle;
-
-            udp.beginPacket(udp.remoteIP(), udp.remotePort());
-            udp.write((uint8_t*)&data, sizeof(data));
-            udp.endPacket();
-
-            LOG_INFO("UDP Sent: item_type={}, first_dist={}", data.item_type, data.dists[0]);
-
-        },
-        "udp send to pc");
-
-        scheduler.add(30, []() { // UDP
+        scheduler.add(100, []() { // UDP
             // Check and Recieve data
             static uint8_t buf[256] = {};
 
             int pack_len = udp.parsePacket();
             if (pack_len == 0) return;
+
             LOG_TRACE("Received From {}:{}, Packet Size: {}", udp.remoteIP(), udp.remotePort(), pack_len);
 
             int len = udp.read(buf, sizeof(buf));
@@ -83,34 +66,22 @@ void setup() {
             target_speed = module_vec(data.target_vel);
             target_yaw   = atan2(data.target_vel.x, data.target_vel.y);
 
-            LOG_INFO("Received Contents: {}, {}", data.target_vel.x, data.target_vel.y);
             if (module_vec_sq(data.target_vel)) {
-                LOG_INFO("Received Contents: {}, {}", data.target_vel.x, data.target_vel.y);
+                LOG_TRACE("Received Contents: {}, {}", data.target_vel.x, data.target_vel.y);
                 buzzer.tone(440, 20);
             }
-
-            iic_commu::slave2master_data.target_vel = target_speed;
-            iic_commu::slave2master_data.target_yaw = target_yaw;
         },
         "Process UDP");
 
         scheduler.add(300, []() { // IR
-            static std::array<uint16_t, IR_CONUT> sensor_values;
-            qtr.read(sensor_values.data(), QTRReadMode::On);
+            static uint16_t sensor_values[IR_CONUT]{};
+            uint16_t pos = qtr.readLineWhite(sensor_values, QTRReadMode::On);
 
-            for (auto& x : sensor_values) {
-                if (x > 150)
-                    x = 1;
-                else
-                    x = 0;
-            }
-
-
-            item_type = 0;
-            for (int i = 0; i < sensor_values.size(); i++) {
-                item_type |= sensor_values[i] << i;
-            }
-            LOG_TRACE("{b}", item_type);
+            LOG_INFO("IR_POS: {}", pos);
+            LOG_INFO("IR_VAL: {} {} {} {} {} {} {} {} {}",
+            sensor_values[0], sensor_values[1], sensor_values[2],
+            sensor_values[3], sensor_values[4], sensor_values[5],
+            sensor_values[6], sensor_values[7], sensor_values[8]);
 
             // Prepare Data for Master requests
             auto& data = iic_commu::slave2master_data;
@@ -137,10 +108,9 @@ void setup() {
             else
                 data.is_new_data = false;
 
-            // LOG_INFO("DATA.value1: {}", data.value1);
-            // LOG_INFO("DATA.value2: {}", data.value2);
-            // LOG_INFO("DATA.value3: {}", data.value3);
-
+            LOG_INFO("DATA.value1: {}", data.value1);
+            LOG_INFO("DATA.value2: {}", data.value2);
+            LOG_INFO("DATA.value3: {}", data.value3);
 
         },
         "Process IIC");
@@ -149,23 +119,23 @@ void setup() {
         },
         "OLED 1306 Display (LiDAR Graph)");
 
-        scheduler.add(200, []() { // OLED 1362
+        scheduler.add(100, []() { // OLED 1362
             auto draw_left = [](U8G2& d) {
                 d.setFont(u8g2_font_6x12_tf);
+                String line{};
 
-                static char buf[128] = {};
+                float speed = target_speed;
+                String dst  = "P1";
+                String mode = "Manual";
 
-                memset(buf, '\0', sizeof(buf));
-                sprintf(buf, "SPEED: %f", target_speed);
-                d.drawStr(2, 14, buf);
+                line = "SPD: " + String(static_cast<int>(target_speed)) + "cm/s";
+                d.drawStr(4, 14, line.c_str());
 
-                memset(buf, '\0', sizeof(buf));
-                sprintf(buf, "ITEM: %d", item_type);
-                d.drawStr(2, 30, buf);
+                line = "DST: " + dst;
+                d.drawStr(4, 30, line.c_str());
 
-                memset(buf, '\0', sizeof(buf));
-                sprintf(buf, "%d.%d.%d.%d", WiFi.localIP()[0], WiFi.localIP()[1], WiFi.localIP()[2], WiFi.localIP()[3]);
-                d.drawStr(2, 46, buf);
+                line = "MODE: " + mode;
+                d.drawStr(4, 46, line.c_str());
             };
 
             auto draw_mid = [](U8G2& d) {
@@ -202,8 +172,7 @@ void setup() {
                 };
 
                 auto dist2disp = [=](int16_t d) -> float {
-                    return constrain(log2f(d) * 6 - 6, 2, l);
-                    // return constrain(map(d, 0, 800, 10, l), 10, l);
+                    return constrain(log2f(d) * 6 - 6, 10, l);
                 };
 
                 for (auto t : { -45, 0, 45, servo_angle - 45 }) {
@@ -236,24 +205,21 @@ void setup() {
         },
         "OLED 1362 Display ");
 
-        scheduler.add(6, []() { // LiDAR
+        scheduler.add(20, []() { // LiDAR
             static int8_t sign{ 1 };
 
             tfl.Set_Trigger(iic_addrs::LiDAR);
 
             // data reading
-            int16_t val;
-            if (tfl.getData(val, iic_addrs::LiDAR)) {
-                dists[servo_angle] = val;
+            if (tfl.getData(dists[servo_angle], iic_addrs::LiDAR)) {
                 // LOG_DEBUG("LiDAR Reading: {}cm", dists[servo_angle]);
             } else {
                 LOG_ERROR_START("LiDAR Read Error: ");
                 tfl.printStatus();
                 Serial.println();
                 tfl.Soft_Reset(iic_addrs::LiDAR);
-                // return;
+                return;
             }
-            // dists[servo_angle] = 15;
             const auto& dist = dists[servo_angle];
             // servo ratation
 
