@@ -1,6 +1,6 @@
 #include <Arduino.h>
-#include <cstring>
 #include <Arduino_LED_Matrix.h>
+#include <cstring>
 
 #include "imu_controller.hpp"
 #include "literals.hpp"
@@ -29,36 +29,36 @@ static void matrix_build_frames() {
     static const uint16_t bitmap[3][8] = {
         // Pattern A - 字母 A
         {
-            0b001110000000,  // ...###....
-            0b010001000000,  // .#....#...
-            0b010001000000,  // .#....#...
-            0b011111000000,  // .#####....
-            0b010001000000,  // .#....#...
-            0b010001000000,  // .#....#...
-            0b010001000000,  // .#....#...
-            0b000000000000,  // ............
+        0b001110000000, // ...###....
+        0b010001000000, // .#....#...
+        0b010001000000, // .#....#...
+        0b011111000000, // .#####....
+        0b010001000000, // .#....#...
+        0b010001000000, // .#....#...
+        0b010001000000, // .#....#...
+        0b000000000000, // ............
         },
         // Pattern B - 字母 B
         {
-            0b011110000000,  // .####....
-            0b010001000000,  // .#...#...
-            0b010001000000,  // .#...#...
-            0b011110000000,  // .####....
-            0b010001000000,  // .#...#...
-            0b010001000000,  // .#...#...
-            0b011110000000,  // .####....
-            0b000000000000,  // ............
+        0b011110000000, // .####....
+        0b010001000000, // .#...#...
+        0b010001000000, // .#...#...
+        0b011110000000, // .####....
+        0b010001000000, // .#...#...
+        0b010001000000, // .#...#...
+        0b011110000000, // .####....
+        0b000000000000, // ............
         },
         // Pattern C - 字母 C
         {
-            0b001111000000,  // ..####...
-            0b010000000000,  // .#.......
-            0b010000000000,  // .#.......
-            0b010000000000,  // .#.......
-            0b010000000000,  // .#.......
-            0b010000000000,  // .#.......
-            0b001111000000,  // ..####...
-            0b000000000000,  // ............
+        0b001111000000, // ..####...
+        0b010000000000, // .#.......
+        0b010000000000, // .#.......
+        0b010000000000, // .#.......
+        0b010000000000, // .#.......
+        0b010000000000, // .#.......
+        0b001111000000, // ..####...
+        0b000000000000, // ............
         }
     };
 
@@ -73,7 +73,7 @@ static void matrix_build_frames() {
         uint32_t frame[3] = { 0, 0, 0 };
         for (uint8_t i = 0; i < 96; ++i) {
             if (pixels[i]) {
-                uint8_t bit_pos = i % 32;
+                uint8_t bit_pos  = i % 32;
                 uint8_t word_idx = i / 32;
                 frame[word_idx] |= (1UL << bit_pos);
             }
@@ -92,12 +92,17 @@ static void matrix_show(uint8_t pattern_index) {
     led_matrix.renderFrame(0);
 }
 
-static uint8_t matrix_selected = 0;
+static uint8_t matrix_selected   = 0;
 static bool matrix_button_a_prev = false;
 static bool matrix_button_b_prev = false;
 static bool matrix_button_c_prev = false;
 
 static slave_to_master_iic_data_t s2m_data{};
+
+enum class State {
+    BALANCE = 1,
+    F1      = 2,
+} g_state;
 
 auto setup() -> void {
 
@@ -327,18 +332,22 @@ auto setup() -> void {
                 static float prev_target_pitch = 0;
                 // float target_pitch = bot_vel_pid.update(bot_vel, dt);
                 target_pitch = bot_vel_pid.update(bot_vel, dt);
-                float a = 0.1;
-                target_pitch       =  (1 - a) * prev_target_pitch + a * constrain(target_pitch, -5 * DEG_TO_RAD, 5 * DEG_TO_RAD);
+                float a      = 0.1;
+                target_pitch = (1 - a) * prev_target_pitch + a * constrain(target_pitch, -5 * DEG_TO_RAD, 5 * DEG_TO_RAD);
                 // target_pitch       = 0;
 
                 prev_target_pitch = target_pitch;
             }
             pitch_pid.set_target(target_pitch + constant.pitch_target_eq_rad);
-
         });
 
         scheduler.add(5, []() { // Main PID Controller
             static constexpr dura_t dt = 5ms;
+
+            if (g_state != State::BALANCE) {
+                return;
+            }
+
             // pitch pid
             // float target_avel = pitch_pid.update(-pitch_angle, dt, imu_ctrl.get_pitch_gyro_rad());
             float target_avel;
@@ -367,6 +376,30 @@ auto setup() -> void {
         },
         "Main PID");
 
+        scheduler.add(20, []() { // F1
+            if (g_state != State::F1) {
+                return;
+            }
+
+            // LOG_INFO("F1");
+
+            auto& data = s2m_data;
+
+            auto spd = -data.target_vel;
+            auto ang = data.target_yaw;
+
+            float forward = spd * cosf(ang);
+            float turn    = spd * sinf(ang);
+
+            float power_l = forward + turn;
+            float power_r = forward - turn;
+
+            motor_l.update_power_force(power_l);
+            motor_r.update_power_force(-power_r);
+
+        },
+        "F1");
+
         scheduler.add(50, []() { // update motor velocity pid
             static constexpr dura_t dt = 50ms;
 
@@ -386,16 +419,18 @@ auto setup() -> void {
             bool b = peripherals::buttons.isPressed('B') == HIGH;
             bool c = peripherals::buttons.isPressed('C') == HIGH;
 
-            LOG_INFO("Button status: A={} B={} C={}", buttons.isPressed('A'), buttons.isPressed('B'), buttons.isPressed('C'));
+            LOG_TRACE("Button status: A={} B={} C={}", buttons.isPressed('A'), buttons.isPressed('B'), buttons.isPressed('C'));
 
             if (a && !matrix_button_a_prev) {
                 matrix_selected = 0;
                 LOG_INFO("Matrix pattern <= A");
+                g_state = State::BALANCE;
                 buttons.setLeds(1, 0, 0);
             }
             if (b && !matrix_button_b_prev) {
                 matrix_selected = 1;
                 LOG_INFO("Matrix pattern <= B");
+                g_state = State::F1;
                 buttons.setLeds(0, 1, 0);
             }
             if (c && !matrix_button_c_prev) {
