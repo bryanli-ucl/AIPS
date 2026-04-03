@@ -23,8 +23,8 @@
 | A1      | None                    | None                                         |
 | A2      | None                    | None                                         |
 | A3      | None                    | None                                         |
-| A4      | IIC DTA                 | Modulinos(IMU, Buzzer), Motoron, Slave Board |
-| A5      | IIC SLC                 | Modulinos(IMU, Buzzer), Motoron, Slave Board |
+| A4      | IIC DTA                 | Modulinos(IMU, Button), Motoron, Slave Board |
+| A5      | IIC SLC                 | Modulinos(IMU, Button), Motoron, Slave Board |
 
 - Slave Boards
 
