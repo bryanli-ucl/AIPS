@@ -5,7 +5,7 @@ A dual-MCU autonomous indoor delivery robot for structured indoor environments. 
 ## Highlights
 
 - Dual-MCU master/slave architecture
-- Five-layer PID-oriented control design
+- Five-layer PID control: pitch, yaw, velocity, left motor, and right motor
 - Encoder feedback for wheel speed estimation
 - IMU-assisted pitch stabilisation
 - Servo-mounted TF-Luna LiDAR scanner
@@ -19,7 +19,11 @@ A dual-MCU autonomous indoor delivery robot for structured indoor environments. 
 - System diagram: TODO (`docs/images/system_architecture.png`)
 - Control architecture: TODO (`docs/images/control_architecture.png`)
 
-Hardware prototype and project diagrams:
+![AIPS complete robot](docs/images/overall.png)
+
+[![AIPS demo video](docs/images/demo_thumbnail.png)](docs/videos/aips_demo.mp4)
+
+Development and project diagrams:
 
 ![AIPS hardware prototype](docs/images/aips_circuit.png)
 
