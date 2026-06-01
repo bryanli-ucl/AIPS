@@ -2,14 +2,26 @@
 
 A dual-MCU autonomous indoor delivery robot for structured indoor environments. The system integrates encoder-based motor control, IMU-assisted pitch stabilisation, IR line tracking, servo-mounted LiDAR obstacle scanning, OLED status display, and layered PID control.
 
+## Highlights
+
+- Dual-MCU master/slave architecture
+- Five-layer PID-oriented control design
+- Encoder feedback for wheel speed estimation
+- IMU-assisted pitch stabilisation
+- Servo-mounted TF-Luna LiDAR scanner
+- IR reflective line tracking
+- Autonomous indoor delivery workflow
+
 ## Demo
 
-- Demo video: TODO
+- Demo video: [docs/videos/aips_demo.mp4](docs/videos/aips_demo.mp4) ([Google Drive mirror](https://drive.google.com/file/d/1HZciD1yVB_ZqC3lFDEw2mFEVtS_SPYBC/view))
 - Robot photo: TODO (`docs/images/robot_photo.jpg`)
 - System diagram: TODO (`docs/images/system_architecture.png`)
 - Control architecture: TODO (`docs/images/control_architecture.png`)
 
-Existing project diagrams:
+Hardware prototype and project diagrams:
+
+![AIPS hardware prototype](docs/images/aips_circuit.png)
 
 ![Robot 3D model](docs/images/3d_model.png)
 
@@ -32,6 +44,16 @@ This is not just an Arduino car. AIPS is a complete embedded robotics system inv
 - I2C communication
 - PID tuning
 - Modular embedded C++ code
+
+## My Contributions
+
+- Designed the dual-MCU system architecture.
+- Implemented PID motor control loops.
+- Integrated encoder feedback for motor speed estimation.
+- Developed the I2C communication layer between controller boards.
+- Implemented the LiDAR scanning subsystem with servo control.
+- Designed and integrated the mechanical structure.
+- Set up the PlatformIO build structure for separate master and slave firmware.
 
 ## System Overview
 
@@ -92,6 +114,20 @@ velocity loop < yaw loop < pitch loop < motor speed loop
 ```
 
 This keeps slower navigation-level adjustments from fighting faster stabilisation and motor response loops.
+
+## Engineering Challenges
+
+### Synchronising Master and Slave MCU
+
+The system splits sensing, navigation state, and actuation across two controller boards. This required a clear master/slave communication contract so that line tracking, LiDAR scanning, status display, motor control, and IMU feedback could run without blocking one another.
+
+### PID Tuning
+
+The robot uses several coupled control loops, including motor speed, yaw/direction correction, pitch stabilisation, and translational velocity regulation. Tuning required balancing response speed against stability so that faster low-level loops did not fight slower navigation-level behaviour.
+
+### Sensor Integration
+
+The project combines encoder feedback, IMU readings, IR reflectance sensing, and LiDAR distance measurements. Each sensor has different timing, noise, and interface constraints, so the firmware had to keep sensing and actuation modular while preserving predictable real-time behaviour.
 
 ## Hardware
 
